@@ -21,28 +21,40 @@ Harder things:
 
 """
 
+import string
+import re
+
+def normalize(input):
+    # Remove punctuation and convert to lowercase
+    input = input.replace(".", " ").translate(str.maketrans('', '', string.punctuation)).lower()
+
+    # Split into words (including periods) and store in a list
+    normalized = re.findall(r'\b[\w.]+\b', input)
+
+    return " ".join(normalized)
+
+
 
 import numpy as np
 import pandas as pd
 import csv
 
-artist_path = "./datasets/artist_info.csv"
-author_path = "./datasets/author_info.csv"
-muse_path = "./datasets/muse_songs.csv"
-quotes_path = "./datasets/quotes.csv"
-word_vad_path = "./datasets/word_to_vad.csv"
+artist_path = "./cis550-datasets/artist_info.csv"
+author_path = "./cis550-datasets/author_info.csv"
+muse_path = "./cis550-datasets/muse_songs.csv"
+quotes_path = "./cis550-datasets/quotes.csv"
+word_vad_path = "./cis550-datasets/word_to_vad.csv"
 
-with open(quotes_path, "r") as source:
+with open(artist_path, "r") as source:
     reader = csv.reader(source)
     
     # head = next(reader)
     # print([(i, head[i]) for i in range(len(head))])
       
-    with open("./datasets/output.csv", "w") as result:
+    with open("./cis550-datasets/output.csv", "w") as result:
         writer = csv.writer(result)
         for r in reader:
-            row = [r[0], r[1]]
-            
+            row = [r[0], normalize(r[0]), r[1], r[2]]            
             
             writer.writerow(tuple(row))
 
@@ -50,3 +62,6 @@ with open(quotes_path, "r") as source:
 
 
 # 1, 3, 7
+
+
+

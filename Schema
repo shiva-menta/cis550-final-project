@@ -1,0 +1,47 @@
+Schema for our DB
+
+create table Author(
+    name_display varchar(255),
+    name_normal varchar(255), PRIMARY KEY (name_normal),
+    work_count int,
+    fan_count int,
+    gender varchar(255),
+        CHECK (gender = 'male' OR gender = 'female' OR gender = 'unknown'),
+    country varchar(255),
+    image_url varchar(500)
+);
+
+CREATE TABLE Song(
+    title varchar(255),
+    artist_name_display varchar(255),
+    artist_name_normal varchar(255),
+        PRIMARY KEY(artist_name_normal, title),
+    valence numeric(3, 2),
+    arousal numeric(3, 2),
+    dominance numeric(3, 2),
+    spotify_id varchar(255)
+);
+
+CREATE TABLE WordVAD(
+    word varchar(255), PRIMARY KEY (word),
+    valence numeric(3, 2),
+    arousal numeric(3, 2),
+    dominance numeric(3, 2)
+);
+
+create table Quote(
+    quote varchar(500), PRIMARY KEY (quote),
+    author_name_display varchar(255),
+    author_name_normal varchar(255),
+    category varchar(255),
+    valence_avg numeric(3, 2),
+    arousal_avg numeric(3, 2),
+    dominance_avg numeric(3, 2)
+);
+
+create table Artist(
+    name_display varchar(255),
+    name_normal varchar(255), PRIMARY KEY (name_normal),
+    country varchar(255),
+    num_listeners int
+);

@@ -1,9 +1,9 @@
 {
-  "rds_host": "hw2-database.cgcfjtgrnyly.us-east-2.rds.amazonaws.com",
+  "rds_host": "final-project.clgejashwtsf.us-east-1.rds.amazonaws.com",
   "rds_port": "3306",
   "rds_user": "admin",
-  "rds_password" : "Welcome11",
-  "rds_db": "SWIFTIFY",
+  "rds_password" : "albertcharliecobyshiva",
+  "rds_db": "title",
   "server_host": "localhost",
   "server_port":"8080"
 }

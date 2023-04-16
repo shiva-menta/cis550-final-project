@@ -34,9 +34,9 @@ create table Quote(
     author_name_display varchar(255),
     author_name_normal varchar(255),
     category varchar(255),
-    valence_avg numeric(3, 2),
-    arousal_avg numeric(3, 2),
-    dominance_avg numeric(3, 2)
+    valence numeric(3, 2),
+    arousal numeric(3, 2),
+    dominance numeric(3, 2)
 );
 
 create table Artist(

@@ -21,47 +21,131 @@ Harder things:
 
 """
 
-import string
+
 import re
-
-def normalize(input):
-    # Remove punctuation and convert to lowercase
-    input = input.replace(".", " ").translate(str.maketrans('', '', string.punctuation)).lower()
-
-    # Split into words (including periods) and store in a list
-    normalized = re.findall(r'\b[\w.]+\b', input)
-
-    return " ".join(normalized)
-
-
-
-import numpy as np
-import pandas as pd
 import csv
+import pandas as pd
 
-artist_path = "./cis550-datasets/artist_info.csv"
-author_path = "./cis550-datasets/author_info.csv"
-muse_path = "./cis550-datasets/muse_songs.csv"
-quotes_path = "./cis550-datasets/quotes.csv"
-word_vad_path = "./cis550-datasets/word_to_vad.csv"
+# quotes_df = pd.read_csv('./cis550-datasets/quotes.csv')
+words_df = pd.read_csv('./cis550-datasets/word_to_vad.csv')
 
-with open(artist_path, "r") as source:
-    reader = csv.reader(source)
-    
-    # head = next(reader)
-    # print([(i, head[i]) for i in range(len(head))])
-      
-    with open("./cis550-datasets/output.csv", "w") as result:
+# word_set = set(words_df['word'].values)
+word_map = {}
+for _, row in words_df.iterrows():
+    word_map[row[0]] = row[1:]
+
+# filtered_quotes = []
+# count = 0
+# for quote in quotes_df['quote']:
+#     words = re.sub(r"[^a-zA-Z\s]", '', quote.lower().replace('/[\W_]+/g', ' ').replace("'", "")).split()
+#     filtered_words = [word for word in words if word in word_set]
+#     filtered_quotes.append(' '.join(filtered_words))
+
+#     count += 1
+#     if count % 10000 == 0:
+#         print(count)
+#         print(words)
+
+# filtered_quotes_df = pd.DataFrame({'quote': filtered_quotes})
+
+# averages = []
+count = 1
+
+
+with open('./cis550-datasets/quotes.csv') as quotes:
+    reader = csv.reader(quotes)
+
+    with open("./cis550-datasets/results.csv", 'w') as result:
+        fnames = ['quote','author_name_display','author_name_normal','category', 'valence_avg', 'arousal_avg', 'dominance_avg']
         writer = csv.writer(result)
-        for r in reader:
-            row = [r[0], normalize(r[0]), r[1], r[2]]            
+                
+        field = True
+        for row in reader:
+            # print(row)
+            if field:
+                field = False
+            else:
+                quo = row[0]
+                quote_split = re.sub(r"[^a-zA-Z\s]", '', quo.lower().replace("\"", "").replace('/[\W_]+/g', ' ').replace("'", "")).split()
+                
+                # print(count, quo, quote_split)
+                vad = [0, 0, 0]
+                num_words = 0
+                for w in quote_split:
+                    if w in word_map:
+                        num_words += 1
+                        v, a, d = word_map[w]
+                        vad = [vad[0] + v, vad[1] + a, vad[2] + d]
+                try:
+                    vad_avg = [vad[0] / num_words, vad[1] / num_words, vad[2] / num_words]
+                except (ZeroDivisionError):
+                    vad_avg = [-1, -1, -1]
+                    # print(quo, quote_split, num_words)
+                
+                writer.writerow(tuple([row[0], row[1], row[2], row[3], vad_avg[0], vad_avg[1], vad_avg[2]]))
+                
+                count += 1
+                if count % 10000 == 0:
+                    print(count)
+                    print("--", row[0])
+                    print("--", vad_avg)
+
+
+# print(re.sub(r"[^a-zA-Z\s]", '', "Hello,$$ there m'y name is J.K. rool^ing../ trut hta".lower().replace('/[\W_]+/g', ' ').replace("'", "")).split())
+
+# import string
+# import re
+
+# def normalize(input):
+#     # Remove punctuation and convert to lowercase
+#     input = input.replace(".", " ").translate(str.maketrans('', '', string.punctuation)).lower()
+
+#     # Split into words (including periods) and store in a list
+#     normalized = re.findall(r'\b[\w.]+\b', input)
+
+#     return " ".join(normalized)
+
+
+
+# import numpy as np
+# import pandas as pd
+# import csv
+
+# artist_path = "../cis550-datasets/artist_info.csv"
+# author_path = "../cis550-datasets/author_info.csv"
+# muse_path = "../cis550-datasets/muse_songs.csv"
+# quotes_path = "./cis550-datasets/quotes.csv"
+# word_vad_path = "../cis550-datasets/word_to_vad.csv"
+
+# with open(quotes_path, "r") as source:
+#     reader = csv.reader(source)
+    
+#     # head = next(reader)
+#     # print([(i, head[i]) for i in range(len(head))])
+      
+#     with open("./cis550-datasets/output.csv", "w") as result:
+#         writer = csv.writer(result)
+#         for r in reader:         
             
-            writer.writerow(tuple(row))
+#             writer.writerow(tuple([r[0], r[1], r[2]]))
+
+
+# # with open("../cis550-datasets/output.csv", newline="") as csvfile:
+# #     spamreader = csv.DictReader(csvfile, delimiter=",")
+# #     sortedlist = sorted(spamreader, key=lambda row:(row['country']), reverse=False)
+
+
+# # with open("../cis550-datasets/output2.csv", 'w') as f:
+# #     fieldnames = ['display_name','normal_name','country','num_listeners']
+# #     writer = csv.DictWriter(f, fieldnames=fieldnames)
+# #     writer.writeheader()
+# #     for row in sortedlist:
+# #         writer.writerow(row)
 
 
 
 
-# 1, 3, 7
+# # 1, 3, 7
 
 
 

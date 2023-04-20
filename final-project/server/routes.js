@@ -19,16 +19,16 @@ const top_words = async function(req, res) {
   connection.query(`
     SELECT w.Word
     FROM WordVAD w
-    ORDER BY SQUARE(w.Valence - ${valence}) 
-    + SQUARE(w.Arousal - ${arousal}) 
-    + SQUARE(w.Dominance - ${dominance}) ASC
+    ORDER BY POWER(w.Valence - ${valence}, 2) 
+    + POWER(w.Arousal - ${arousal}, 2) 
+    + POWER(w.Dominance - ${dominance}, 2) ASC
     LIMIT 10
   `, (err, data) => {
     if (err || data.length === 0) {
       console.log(err);
       res.json({});
     } else {
-      res.json(data);
+      res.json(data.map(obj => obj.Word));
       return res;
     }
   })
@@ -39,56 +39,62 @@ const quotes_and_songs = async function(req, res) {
   const valence = req.params.valence;
   const arousal = req.params.arousal;
   const dominance = req.params.dominance;
-  let songs = {};
-  let quotes = {};
 
-  connection.query(`
-    SELECT s.SpotifyID, s.Title
-    FROM Song s
-    ORDER BY SQUARE(w.Valence - ${valence}) 
-    + SQUARE(w.Arousal - ${arousal}) 
-    + SQUARE(w.Dominance - ${dominance}) ASC
-    LIMIT 10  
-  `, (err, data) => {
-    if (err || data.length === 0) {
-      console.log(err);
-      res.json({});
-    } else {
-      songs = data;
-    }
-  })
+  const querySongs = () => new Promise((resolve, reject) => {
+    connection.query(`
+      SELECT s.spotify_id, s.title
+      FROM Song s
+      ORDER BY POWER(s.valence - ${valence}, 2) 
+      + POWER(s.arousal - ${arousal}, 2) 
+      + POWER(s.dominance - ${dominance}, 2) ASC
+      LIMIT 10  
+    `, (err, data) => {
+      if (err || data.length === 0) {
+        reject(err);
+      } else {
+        resolve(data);
+      }
+    });
+  });
 
-  connection.query(`
-    SELECT q.Quote
-    FROM Quote q
-    ORDER BY SQUARE(w.Valence - ${valence}) 
-    + SQUARE(w.Arousal - ${arousal}) 
-    + SQUARE(w.Dominance - ${dominance}) ASC
-    LIMIT 10  
-  `, (err, data) => {
-    if (err || data.length === 0) {
-      console.log(err);
-      res.json({});
-    } else {
-      quotes = data;
-    }
-  })
+  const queryQuotes = () => new Promise((resolve, reject) => {
+    connection.query(`
+      SELECT q.author_name_display AS author, q.quote
+      FROM Quote q
+      ORDER BY POWER(q.valence - ${valence}, 2) 
+      + POWER(q.arousal - ${arousal}, 2) 
+      + POWER(q.dominance - ${dominance}, 2) ASC
+      LIMIT 10  
+    `, (err, data) => {
+      if (err || data.length === 0) {
+        reject(err);
+      } else {
+        resolve(data);
+      }
+    });
+  });
 
-  res.json({songs, quotes});
-  return res;
+  try {
+    const songs = await querySongs();
+    const quotes = await queryQuotes();
+    res.json({ songs, quotes });
+  } catch (err) {
+    console.log(err);
+    res.json({});
+  }
 }
 
 // Route 3: Get /creators_vad – All creators that have produced content within a specific VAD range
 const creators_vad = async function(req, res) {
-  const min_valence = req.params.min_valence ?? 0;
-  const max_valence = req.params.max_valence ?? 7;
-  const min_arousal = req.params.min_arousal ?? 0;
-  const max_arousal = req.params.max_arousal ?? 7;
-  const min_dominance = req.params.min_dominance ?? 0;
-  const max_dominance = req.params.max_dominance ?? 7;
+  const min_valence = req.query.min_valence ?? 0;
+  const max_valence = req.query.max_valence ?? 7;
+  const min_arousal = req.query.min_arousal ?? 0;
+  const max_arousal = req.query.max_arousal ?? 7;
+  const min_dominance = req.query.min_dominance ?? 0;
+  const max_dominance = req.query.max_dominance ?? 7;
 
   connection.query(`
-    SELECT au.Name
+    SELECT au.author_name_display AS name, 'Quote Author' AS type
     FROM AuthorsVAD au
     WHERE au.avg_val BETWEEN ${min_valence} and ${max_valence}
     AND au.avg_ars BETWEEN ${min_arousal} and ${max_arousal}
@@ -96,7 +102,7 @@ const creators_vad = async function(req, res) {
 
     UNION
     
-    SELECT ar.Name
+    SELECT ar.artist_name_display AS name, 'Song Artist' AS type
     FROM ArtistsVAD ar
     WHERE ar.avg_val BETWEEN ${min_valence} and ${max_valence}
     AND ar.avg_ars BETWEEN ${min_arousal} and ${max_arousal}
@@ -114,8 +120,8 @@ const creators_vad = async function(req, res) {
 
 // Route 4: Get /artist_similarity between two artists
 const creator_similarity = async function(req, res) {
-  const creator1_id = req.params.creator1_id;
-  const creator2_id = req.params.creator2_id;
+  const creator1_name = req.params.creator1_id;
+  const creator2_name = req.params.creator2_id;
 
   connection.query(`
     SELECT c1.avg_val - c2.avg_val AS valence_diff,
@@ -123,7 +129,7 @@ const creator_similarity = async function(req, res) {
     c1.avg_dom - c2.avg_dom AS dominance_diff,
     SQRT(POWER(c1.avg_val - c2.avg_val, 2) + POWER(c1.avg_ars -  c2.avg_ars, 2) + POWER(c1.avg_dom - c2.avg_dom, 2)) AS similarity_score
     FROM ArtistsVAD c1, ArtistsVAD c2
-    WHERE c1.Name = ${creator1_id} AND c2.Name = ${creator2_id};
+    WHERE c1.artist_name_display = '${creator1_name}' AND c2.artist_name_display = '${creator2_name}';
   `, (err, data) => {
     if (err || data.length === 0) {
       console.log(err);
@@ -137,22 +143,22 @@ const creator_similarity = async function(req, res) {
 
 // Route 5: Get /artists/:artist_id
 const artists = async function(req, res) {
-  const artist_id = req.params.artist_id;
+  const artist_name = req.params.artist_id;
 
   connection.query(`
-    SELECT av.artist_display_name,
+    SELECT av.artist_name_display,
       av.avg_val,
       av.avg_ars,
       av.avg_dom,
       (
           SELECT vw1.word
-          FROM VAD_Words vw1
-          ORDER BY ABS(vw1.valence - av.avg_val) + 
-                  ABS(vw1.arousal - av.avg_ars) + ABS(vw1.dominance - av.avg_dom) ASC
+          FROM WordVAD vw1
+          ORDER BY POWER(vw1.valence - av.avg_val, 2) + 
+                  POWER(vw1.arousal - av.avg_ars, 2) + POWER(vw1.dominance - av.avg_dom, 2) ASC
           LIMIT 1
       ) AS closest_word
-    FROM ArtistVAD av
-    WHERE av.artist_id = ${artist_id};
+    FROM ArtistsVAD av
+    WHERE av.artist_name_display = '${artist_name}';
   `, (err, data) => {
     if (err || data.length === 0) {
       console.log(err);
@@ -269,12 +275,12 @@ const country_songs_and_quotes = async function(req, res) {
 // Route 9: Get Mood Shift Playlist
 const mood_shift_playlist = async function(req, res) {
   const threshold = 0.1;
-  const curr_valence = req.params.curr_valence ?? 0;
-  const des_valence = req.params.des_valence ?? 7;
-  const curr_arousal = req.params.curr_arousal ?? 0;
-  const des_arousal = req.params.des_arousal ?? 7;
-  const curr_dominance = req.params.curr_dominance ?? 0;
-  const des_dominance = req.params.des_dominance ?? 7;
+  const curr_valence = req.query.curr_valence ?? 0;
+  const des_valence = req.query.des_valence ?? 7;
+  const curr_arousal = req.query.curr_arousal ?? 0;
+  const des_arousal = req.query.des_arousal ?? 7;
+  const curr_dominance = req.query.curr_dominance ?? 0;
+  const des_dominance = req.query.des_dominance ?? 7;
 
   connection.query(`
     WITH StartingSong AS (
@@ -342,7 +348,6 @@ module.exports = {
   creators_vad,
   creator_similarity,
   artists,
-  signature_song_and_quote,
   country_songs_and_quotes,
   word_title_vad_frequency,
   mood_shift_playlist

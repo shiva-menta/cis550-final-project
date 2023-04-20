@@ -3,7 +3,7 @@
   "rds_port": "3306",
   "rds_user": "admin",
   "rds_password" : "albertcharliecobyshiva",
-  "rds_db": "title",
+  "rds_db": "project",
   "server_host": "localhost",
   "server_port":"8080"
 }

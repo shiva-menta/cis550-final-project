@@ -15,9 +15,8 @@ app.get('/quotes_and_songs/:valence/:arousal/:dominance', routes.quotes_and_song
 app.get('/creators_vad', routes.creators_vad);
 app.get('/creator_similarity/:creator1_id/:creator2_id', routes.creator_similarity);
 app.get('/artists/:artist_id', routes.artists);
-app.get('/title_song_vad_comparison', routes.title_song_vad_comparison);
 app.get('/word_title_vad_frequency/:word', routes.word_title_vad_frequency);
-app.get('/country_songs_and_quotes', routes.signature_song_and_quote);
+app.get('/country_songs_and_quotes', routes.country_songs_and_quotes);
 app.get('/mood_shift_playlist', routes.mood_shift_playlist);
 
 app.listen(config.server_port, () => {

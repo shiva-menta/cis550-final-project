@@ -1,5 +1,15 @@
 Schema for our DB
 
+    Credentials
+User: admin
+Password: albertcharliecobyshiva
+Host: final-project.clgejashwtsf.us-east-1.rds.amazonaws.com
+Port: 3306
+USE TABLE project
+
+
+    Tables
+
 create table Author(
     name_display varchar(255),
     name_normal varchar(255), PRIMARY KEY (name_normal),
@@ -32,8 +42,8 @@ CREATE TABLE WordVAD(
 create table Quote(
     quote varchar(500), PRIMARY KEY (quote),
     author_name_display varchar(255),
-    author_name_normal varchar(255),
-    category varchar(255),
+    author_name_normal varchar(255), 
+        FOREIGN KEY (author_name_normal) REFERENCES Author(name_normal),
     valence numeric(3, 2),
     arousal numeric(3, 2),
     dominance numeric(3, 2)
@@ -44,4 +54,29 @@ create table Artist(
     name_normal varchar(255), PRIMARY KEY (name_normal),
     country varchar(255),
     num_listeners int
+);
+
+
+
+
+    Views
+
+CREATE VIEW AuthorsVAD AS (
+    SELECT author_name_display, 
+           author_name_normal, 
+           AVG(valence) as avg_val,
+           AVG(arousal) as avg_ars, 
+           AVG(dominance) as avg_dom
+    FROM Quote
+    GROUP BY author_name_display, author_name_normal
+);
+
+CREATE VIEW ArtistsVAD AS (
+    SELECT artist_name_display, 
+           artist_name_normal, 
+           AVG(valence) as avg_val,
+           AVG(arousal) as avg_ars, 
+           AVG(dominance) as avg_dom
+    FROM Song
+    GROUP BY artist_name_display, artist_name_normal
 );

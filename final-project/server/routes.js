@@ -283,54 +283,63 @@ const mood_shift_playlist = async function(req, res) {
   const des_dominance = req.query.des_dominance ?? 7;
 
   connection.query(`
-    WITH StartingSong AS (
-      SELECT s1.SpotifyID AS FirstSongID, s1.Valence AS current_valence, s1.Arousal AS 
-        current_arousal, s1.Dominance AS current_dominance
-      FROM Song s1
-      WHERE s1.Valence BETWEEN ${curr_valence} - ${threshold} AND ${curr_valence} + ${threshold}
-        AND s1.Arousal BETWEEN ${curr_arousal} - ${threshold} AND ${curr_arousal} + ${threshold}
-        AND s1.Dominance BETWEEN ${curr_dominance} - ${threshold} AND ${curr_dominance} + ${threshold}
+  WITH StartingSong AS (
+    SELECT s1.spotify_id AS FirstSongID, s1.title AS FirstSongTitle, s1.artist_name_display as FirstSongArtist, s1.Valence AS current_valence, s1.Arousal AS
+    current_arousal, s1.Dominance AS current_dominance
+    FROM Song s1
+    WHERE s1.Valence BETWEEN ${startingValence} - ${tolerance}  AND ${startingValence} + ${tolerance}
+    AND s1.Arousal BETWEEN ${startingArousal} - ${tolerance}  AND ${startingArousal} + ${tolerance}
+    AND s1.Dominance BETWEEN ${startingDominance} - ${tolerance}  AND ${startingDominance} + ${tolerance}
     ),
-    SecondSong AS (
-      SELECT s1.FirstSongID, s2.SpotifyID AS SecondSongID, s2.Valence AS current_valence, 
-        s2.Arousal AS current_arousal, s2.Dominance AS current_dominance
-        FROM StartingSong s1 JOIN Song s2 ON 
-        CASE
-          WHEN desiredValence >= s1.current_valence THEN s1.current_valence <= 2.Valence
-          ELSE s1.current_valence > s2.Valence
+SecondSong AS (
+    SELECT s1.FirstSongID, s1.FirstSongTitle, s1.FirstSongArtist,
+           s2.spotify_id AS SecondSongID, s2.title AS SecondSongTitle, s2.artist_name_display AS SecondSongArtist,
+           s2.Valence AS current_valence, s2.Arousal AS current_arousal, s2.Dominance AS current_dominance
+    FROM StartingSong s1 JOIN Song s2 ON
+    CASE
+    WHEN ${desiredValence} >= s1.current_valence THEN s1.current_valence <=
+    s2.Valence
+    ELSE s1.current_valence > s2.Valence
         END AND
         CASE
-          WHEN desiredArousal >= s1.current_arousal THEN s1.current_arousal <= s2.Arousal
-          ELSE s1.current_arousal > s2.Arousal
+            WHEN ${desiredArousal} >= s1.current_arousal THEN s1.current_arousal <=
+    s2.Arousal
+    ELSE s1.current_arousal > s2.Arousal
         END AND
         CASE
-          WHEN desiredDominance >= s1.current_dominance THEN s1.current_dominance <= s2.Dominance
-          ELSE s1.current_dominance > s2.Dominance
-        END
-    ),
-    ThirdSong AS (
-      SELECT s1.FirstSongID, s2.SecondSongID, s3.SpotifyID AS ThirdSongID, s3.Valence AS 
-        final_valence, s3.Arousal AS final_arousal, s3.Dominance AS final_dominance
-      FROM SecondSong s2 JOIN Song s3 ON 
-      CASE
-        WHEN desiredValence >= s2.current_valence THEN s2.current_valence <= s3.Valence
-        ELSE s2.current_valence > s3.Valence
-      END AND
-      CASE
-        WHEN desiredArousal >= s2.current_arousal THEN s2.current_arousal <= s3.Arousal
-        ELSE s2.current_arousal > s3.Arousal
-      END AND
-      CASE
-        WHEN desiredDominance >= s2.current_dominance THEN s2.current_dominance <= s3.Dominance
-        ELSE s2.current_dominance > s3.Dominance
-      END
+            WHEN ${desiredDominance} >= s1.current_dominance THEN
+s1.current_dominance <= s2.Dominance
+ELSE s1.current_dominance > s2.Dominance
+		END
+),
+ThirdSong AS (
+    SELECT s2.FirstSongID, s2.FirstSongTitle, s2.FirstSongArtist,
+           s2.SecondSongID, s2.SecondSongTitle, s2.SecondSongArtist,
+           s3.spotify_id AS ThirdSongID, s3.title AS ThirdSongTitle, s3.artist_name_display AS ThirdSongArtist,
+           s3.Valence AS final_valence, s3.Arousal AS final_arousal, s3.Dominance AS final_dominance
+    FROM SecondSong s2 JOIN Song s3 ON
+    CASE
+    WHEN ${desiredValence} >= s2.current_valence THEN s2.current_valence <=
+    s3.Valence
+    ELSE s2.current_valence > s3.Valence
+            END AND
+            CASE
+                WHEN ${desiredArousal} >= s2.current_arousal THEN s2.current_arousal <=
+    s3.Arousal
+    ELSE s2.current_arousal > s3.Arousal
+            END AND
+            CASE
+                WHEN ${desiredDominance} >= s2.current_dominance THEN
+    s2.current_dominance <= s3.Dominance
+    ELSE s2.current_dominance > s3.Dominance
+            END
     )
-      
-    SELECT FirstSongID, SecondSongID, ThirdSongID
-    FROM ThirdSong
-    WHERE final_valence BETWEEN ${des_valence} - ${threshold} AND ${des_valence} + ${threshold}
-      AND final_arousal BETWEEN ${des_arousal} - ${threshold} AND ${des_arousal} + ${threshold}
-      AND final_dominance BETWEEN ${des_dominance} - ${threshold} AND ${des_dominance} + ${threshold}
+
+SELECT FirstSongID, FirstSongTitle, FirstSongArtist, SecondSongID, SecondSongTitle, SecondSongArtist, ThirdSongID, ThirdSongTitle, ThirdSongArtist
+FROM ThirdSong
+WHERE final_valence BETWEEN ${desiredValence} - ${tolerance} AND ${desiredValence} + ${tolerance}
+    AND final_arousal BETWEEN ${desiredArousal} - ${tolerance}  AND ${desiredArousal} + ${tolerance}
+    AND final_dominance BETWEEN ${desiredDominance} - ${tolerance}  AND ${desiredDominance} + ${tolerance}
   `, (err, data) => {
     if (err || data.length === 0) {
       console.log(err);

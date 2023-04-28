@@ -279,74 +279,79 @@ const country_songs_and_quotes = async function(req, res) {
 }
 
 // Route 9: Get Mood Shift Playlist
-//*****WARNING: does not work yet!! Takes a really long time*****
 const mood_shift_playlist = async function(req, res) {
-  const threshold = 1;
-  const curr_valence = req.query.curr_valence ?? 0;
-  const des_valence = req.query.des_valence ?? 7;
-  const curr_arousal = req.query.curr_arousal ?? 0;
-  const des_arousal = req.query.des_arousal ?? 7;
-  const curr_dominance = req.query.curr_dominance ?? 0;
-  const des_dominance = req.query.des_dominance ?? 7;
+  const threshold = req.query.des_arousal ?? 1;
+  const start_word = req.query.start_word;
+  const end_word = req.query.end_word;
 
   connection.query(`
-	 WITH StartingSong AS (
-	    SELECT s1.spotify_id AS FirstSongID, s1.title AS FirstSongTitle, s1.artist_name_display as FirstSongArtist, s1.Valence AS current_valence, s1.Arousal AS
-	    current_arousal, s1.Dominance AS current_dominance
-	    FROM Song s1
-	    WHERE s1.Valence BETWEEN ${curr_valence} - ${threshold}  AND ${curr_valence} + ${threshold}
-	    AND s1.Arousal BETWEEN ${curr_arousal} - ${threshold}  AND ${curr_arousal} + ${threshold}
-	    AND s1.Dominance BETWEEN ${curr_dominance} - ${threshold}  AND ${curr_dominance} + ${threshold}
-	    ),
-	SecondSong AS (
-	    SELECT s1.FirstSongID, s1.FirstSongTitle, s1.FirstSongArtist,
-		   s2.spotify_id AS SecondSongID, s2.title AS SecondSongTitle, s2.artist_name_display AS SecondSongArtist,
-		   s2.Valence AS current_valence, s2.Arousal AS current_arousal, s2.Dominance AS current_dominance
-	    FROM StartingSong s1 JOIN Song s2 ON
-	    CASE
-	    WHEN ${des_valence} >= s1.current_valence THEN s1.current_valence <=
-	    s2.Valence
-	    ELSE s1.current_valence > s2.Valence
-		END AND
-		CASE
-		    WHEN ${des_arousal} >= s1.current_arousal THEN s1.current_arousal <=
-	    s2.Arousal
-	    ELSE s1.current_arousal > s2.Arousal
-		END AND
-		CASE
-		    WHEN ${des_dominance} >= s1.current_dominance THEN
-	s1.current_dominance <= s2.Dominance
-	ELSE s1.current_dominance > s2.Dominance
-			END
-	),
-	ThirdSong AS (
-	    SELECT s2.FirstSongID, s2.FirstSongTitle, s2.FirstSongArtist,
-		   s2.SecondSongID, s2.SecondSongTitle, s2.SecondSongArtist,
-		   s3.spotify_id AS ThirdSongID, s3.title AS ThirdSongTitle, s3.artist_name_display AS ThirdSongArtist,
-		   s3.Valence AS final_valence, s3.Arousal AS final_arousal, s3.Dominance AS final_dominance
-	    FROM SecondSong s2 JOIN Song s3 ON
-	    CASE
-	    WHEN ${des_valence} >= s2.current_valence THEN s2.current_valence <=
-	    s3.Valence
-	    ELSE s2.current_valence > s3.Valence
-		    END AND
-		    CASE
-			WHEN ${des_arousal} >= s2.current_arousal THEN s2.current_arousal <=
-	    s3.Arousal
-	    ELSE s2.current_arousal > s3.Arousal
-		    END AND
-		    CASE
-			WHEN ${des_dominance} >= s2.current_dominance THEN
-	    s2.current_dominance <= s3.Dominance
-	    ELSE s2.current_dominance > s3.Dominance
-		    END
-	    )
+  WITH Word1 AS 
+    (SELECT 'word1' as word, w1.valence, w1.arousal, w1.dominance
+    FROM WordVAD w1
+    WHERE w1.word = ${start_word}),
+  Word3 AS 
+    (SELECT 'word3' as word, w3.valence, w3.arousal, w3.dominance
+    FROM WordVAD w3
+    WHERE w3.word = ${end_word}),
+  Word2 AS (
+    SELECT 'word2' as word,
+    (w1.valence + w3.valence) / 2 AS valence,
+    (w1.arousal + w3.arousal) / 2 AS arousal,
+    (w1.dominance + w3.dominance) / 2 AS dominance
+    FROM Word1 w1, Word3 w3
+    ),
+  StartingSong AS (
+    SELECT spotify_id, title, artist_name_display
+    FROM Song s1
+      JOIN Word1 w1 ON (
+        ABS(w1.valence - s1.valence) <= ${threshold} AND
+        ABS(w1.arousal - s1.arousal) <= ${threshold} AND
+        ABS(w1.dominance - s1.dominance) <= ${threshold})
 
-	SELECT FirstSongID, FirstSongTitle, FirstSongArtist, SecondSongID, SecondSongTitle, SecondSongArtist, ThirdSongID, ThirdSongTitle, ThirdSongArtist
-	FROM ThirdSong
-	WHERE final_valence BETWEEN ${des_valence} - ${threshold} AND ${des_valence} + ${threshold}
-	    AND final_arousal BETWEEN ${des_arousal} - ${threshold}  AND ${des_arousal} + ${threshold}
-	    AND final_dominance BETWEEN ${des_dominance} - ${threshold}  AND ${des_dominance} + ${threshold}
+    ORDER BY SQRT(
+    POW( (w1.valence - s1.valence), 2)
+    + POW( (w1.arousal - s1.arousal), 2)
+    + POW( (w1.dominance - s1.dominance), 2)
+    )
+
+    LIMIT 30
+    ),
+  MiddleSong AS (
+    SELECT spotify_id, title, artist_name_display
+    FROM Song s2
+      JOIN Word2 w2 ON (
+        ABS(w2.valence - s2.valence) <= ${threshold} AND
+        ABS(w2.arousal - s2.arousal) <= ${threshold} AND
+        ABS(w2.dominance - s2.dominance) <= ${threshold})
+
+    ORDER BY SQRT(
+      POW( (w2.valence - s2.valence), 2)
+      + POW( (w2.arousal - s2.arousal), 2)
+      + POW( (w2.dominance - s2.dominance), 2)
+    )
+
+    LIMIT 30
+    ),
+  ThirdSong AS (
+    SELECT spotify_id, title, artist_name_display
+    FROM Song s3
+      JOIN Word3 w3 ON (
+        ABS(w3.valence - s3.valence) <= ${threshold} AND
+        ABS(w3.arousal - s3.arousal) <= ${threshold} AND
+        ABS(w3.dominance - s3.dominance) <= ${threshold})
+
+
+    ORDER BY SQRT(
+      POW( (w3.valence - s3.valence), 2)
+      + POW( (w3.arousal - s3.arousal), 2)
+      + POW( (w3.dominance - s3.dominance), 2)
+    )
+
+    LIMIT 30
+    )
+  SELECT *
+  FROM StartingSong, MiddleSong, ThirdSong
+  ORDER BY RAND()
   `, (err, data) => {
     if (err || data.length === 0) {
       console.log(err);

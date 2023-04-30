@@ -18,7 +18,7 @@ app.get('/artists/:artist_id', routes.artists);
 app.get('/authors/:author_id', routes.authors);
 app.get('/word_title_vad_frequency/:word/:tolerance', routes.word_title_vad_frequency);
 app.get('/country_songs_and_quotes', routes.country_songs_and_quotes);
-app.get('/mood_shift_playlist', routes.mood_shift_playlist);
+app.get('/mood_shift_playlist/:start_word/:end_word/:threshold', routes.mood_shift_playlist);
 app.get('/words', routes.words);
 app.get('/word_to_vad/:word', routes.word_to_vad);
 app.get('/author_quotes/:author_name', routes.author_quotes);

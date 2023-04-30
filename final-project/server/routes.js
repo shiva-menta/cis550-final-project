@@ -367,9 +367,9 @@ const country_songs_and_quotes = async function(req, res) {
 
 // Route 9: Get Mood Shift Playlist
 const mood_shift_playlist = async function(req, res) {
+  const start_word = req.query.start_word;
+  const end_word = req.query.end_word;
   const threshold = req.query.threshold ?? 1;
-  const start_word = req.query.startWord;
-  const end_word = req.query.endWord;
 
   connection.query(`
   WITH Word1 AS 

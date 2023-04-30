@@ -30,3 +30,7 @@
     width: 2rem;
     height: 2rem;
 }
+
+.rotate-135 {
+    transform: rotate(135deg);
+}

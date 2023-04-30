@@ -4,9 +4,11 @@ import "bootstrap/dist/css/bootstrap.min.css";
 
 import NavBar from "./components/NavBar";
 import CheckInPage from "./pages/CheckInPage";
-import CreatorsPage from "./pages/CreatorsPage";
+import ExploreCreatorsPage from "./pages/ExploreCreatorsPage";
 import MoodJourneyPage from "./pages/MoodJourneyPage";
 import WorldPage from "./pages/WorldPage";
+import TitleInfoPage from "./pages/TitleInfoPage";
+import CreatorPage from "./pages/CreatorPage";
 
 export default function App() {
   const [bgColor, setBgColor] = useState(200);
@@ -24,9 +26,11 @@ export default function App() {
           <NavBar />
           <Routes>
             <Route path="/" element={<CheckInPage color={bgColor} />}/>
-            <Route path="/creators" element={<CreatorsPage />} />
+            <Route path="/explorecreators" element={<ExploreCreatorsPage color={bgColor} />} />
+            <Route path="/creator/:name/:type" element={<CreatorPage />} />
             <Route path="/moodjourney" element={<MoodJourneyPage color={bgColor} />} />
             <Route path="/world" element={<WorldPage />} />
+            <Route path="/titleinfo" element={<TitleInfoPage color={bgColor} />} />
           </Routes>
         </div>
       </BrowserRouter>

@@ -10,7 +10,7 @@ const connection = mysql.createConnection({
 });
 connection.connect((err) => err && console.log(err));
 
-// Route 1: Get /top_words given VAD values
+// Route 1: Get /top_word given VAD values
 const top_words = async function(req, res) {
   const valence = req.params.valence;
   const arousal = req.params.arousal;
@@ -22,13 +22,31 @@ const top_words = async function(req, res) {
     ORDER BY POWER(w.Valence - ${valence}, 2) 
     + POWER(w.Arousal - ${arousal}, 2) 
     + POWER(w.Dominance - ${dominance}, 2) ASC
-    LIMIT 10
+    LIMIT 1
   `, (err, data) => {
     if (err || data.length === 0) {
       console.log(err);
       res.json({});
     } else {
       res.json(data.map(obj => obj.Word));
+      return res;
+    }
+  })
+}
+
+const word_to_vad = async function(req, res) {
+  const word = req.params.word;
+
+  connection.query(`
+    SELECT *
+    FROM WordVAD w
+    WHERE w.Word = '${word}'
+  `, (err, data) => {
+    if (err || data.length === 0) {
+      console.log(err);
+      res.json({});
+    } else {
+      res.json(data);
       return res;
     }
   })
@@ -42,7 +60,7 @@ const quotes_and_songs = async function(req, res) {
 
   const querySongs = () => new Promise((resolve, reject) => {
     connection.query(`
-      SELECT s.spotify_id, s.title
+      SELECT s.spotify_id AS spotifyId, s.title, s.artist_name_display AS artist
       FROM Song s
       ORDER BY POWER(s.valence - ${valence}, 2) 
       + POWER(s.arousal - ${arousal}, 2) 
@@ -86,27 +104,30 @@ const quotes_and_songs = async function(req, res) {
 
 // Route 3: Get /creators_vad – All creators that have produced content within a specific VAD range
 const creators_vad = async function(req, res) {
+  const prefix = req.query.prefix ?? "";
   const min_valence = req.query.min_valence ?? 0;
-  const max_valence = req.query.max_valence ?? 7;
+  const max_valence = req.query.max_valence ?? 10;
   const min_arousal = req.query.min_arousal ?? 0;
-  const max_arousal = req.query.max_arousal ?? 7;
+  const max_arousal = req.query.max_arousal ?? 10;
   const min_dominance = req.query.min_dominance ?? 0;
-  const max_dominance = req.query.max_dominance ?? 7;
+  const max_dominance = req.query.max_dominance ?? 10;
 
   connection.query(`
-    SELECT au.author_name_display AS name, 'Quote Author' AS type
+    SELECT au.author_name_display AS name, 'Quote Author' AS type, au.avg_val, au.avg_ars, au.avg_dom
     FROM AuthorsVAD au
     WHERE au.avg_val BETWEEN ${min_valence} and ${max_valence}
     AND au.avg_ars BETWEEN ${min_arousal} and ${max_arousal}
     AND au.avg_dom BETWEEN ${min_dominance} and ${max_dominance}
+    ${prefix === "" ? "" : `AND au.author_name_display LIKE '${prefix}%'`}
 
     UNION
     
-    SELECT ar.artist_name_display AS name, 'Song Artist' AS type
+    SELECT ar.artist_name_display AS name, 'Song Artist' AS type, ar.avg_val, ar.avg_ars, ar.avg_dom
     FROM ArtistsVAD ar
     WHERE ar.avg_val BETWEEN ${min_valence} and ${max_valence}
     AND ar.avg_ars BETWEEN ${min_arousal} and ${max_arousal}
     AND ar.avg_dom BETWEEN ${min_dominance} and ${max_dominance}
+    ${prefix === "" ? "" : `AND ar.artist_name_display LIKE '${prefix}%'`}
   `, (err, data) => {
     if (err || data.length === 0) {
       console.log(err);
@@ -120,8 +141,8 @@ const creators_vad = async function(req, res) {
 
 // Route 4: Get /artist_similarity between two artists
 const creator_similarity = async function(req, res) {
-  const creator1_name = req.params.creator1_id;
-  const creator2_name = req.params.creator2_id;
+  const creator1_name = req.params.creator1_name;
+  const creator2_name = req.params.creator2_name;
 
   connection.query(`
     SELECT c1.avg_val - c2.avg_val AS valence_diff,
@@ -170,6 +191,71 @@ const artists = async function(req, res) {
   })
 }
 
+const author_quotes = async function(req, res) {
+  const author_name = req.params.author_name;
+
+  connection.query(`
+    SELECT q.author_name_display AS author, q.quote
+    FROM Quote q
+    WHERE q.author_name_display = '${author_name}';
+  `, (err, data) => {
+    if (err || data.length === 0) {
+      console.log(err);
+      res.json({});
+    } else {
+      res.json(data);
+      return res;
+    }
+  })
+}
+
+const artist_songs = async function(req, res) {
+  const artist_name = req.params.artist_name;
+
+  connection.query(`
+    SELECT s.artist_name_display AS artist, s.title AS title, s.spotify_id AS spotifyId
+    FROM Song s
+    WHERE s.artist_name_display = '${artist_name}';
+  `, (err, data) => {
+    if (err || data.length === 0) {
+      console.log(err);
+      res.json({});
+    } else {
+      res.json(data);
+      return res;
+    }
+  })
+}
+
+// Route 5: Get /artists/:artist_id
+const authors = async function(req, res) {
+  const author = req.params.author_id;
+
+  connection.query(`
+    SELECT au.author_name_display,
+      au.avg_val,
+      au.avg_ars,
+      au.avg_dom,
+      (
+          SELECT vw1.word
+          FROM WordVAD vw1
+          ORDER BY POWER(vw1.valence - au.avg_val, 2) + 
+                  POWER(vw1.arousal - au.avg_ars, 2) + POWER(vw1.dominance - au.avg_dom, 2) ASC
+          LIMIT 1
+      ) AS closest_word
+    FROM AuthorsVAD au
+    WHERE au.author_name_display = '${author}';
+  `, (err, data) => {
+    if (err || data.length === 0) {
+      console.log(err);
+      res.json({});
+    } else {
+      res.json(data);
+      return res;
+    }
+  })
+}
+
 // Route 7: Find pieces with song in title and how frequently they're in a certain threshold of word's VAD
 const word_title_vad_frequency = async function(req, res) {
   const word = req.params.word;
@@ -179,17 +265,17 @@ const word_title_vad_frequency = async function(req, res) {
 	WITH Selected_Word_VAD AS (
 		SELECT Valence, Arousal, Dominance
 		FROM WordVAD
-		WHERE word = ${word}
+		WHERE word = '${word}'
 	),
 	Filtered_Songs AS (
 		SELECT *
 		FROM Song
-		WHERE title LIKE CONCAT('%', ${word}, '%')
+		WHERE LOWER(title) LIKE '%${word}%'
 	),
 	Filtered_Quotes AS (
 		SELECT *
 		FROM Quote
-		WHERE quote LIKE CONCAT('%', ${word}, '%')
+		WHERE LOWER(quote) LIKE '%${word}%'
 	),
 	Songs_In_Range AS (
 		SELECT s.*
@@ -391,4 +477,8 @@ module.exports = {
   word_title_vad_frequency,
   mood_shift_playlist,
   words,
+  word_to_vad,
+  authors,
+  author_quotes,
+  artist_songs
 }

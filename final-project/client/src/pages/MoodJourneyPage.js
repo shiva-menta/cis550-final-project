@@ -41,7 +41,6 @@ function MoodJourneyPage(props) {
         }
 
         getPlaylistsInfo();
-        console.log("bruh")
         setShowPlaylist(true);
     }
 

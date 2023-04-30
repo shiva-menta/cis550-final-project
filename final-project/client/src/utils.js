@@ -12,7 +12,6 @@ async function spotifyIdToJSON(id, accessToken) {
 
     const response = await fetch(base_url + 'tracks/' + id, searchParameters)
     const data = await response.json();
-    console.log(data);
 
     if (data.error) {
         return {

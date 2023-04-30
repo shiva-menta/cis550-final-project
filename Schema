@@ -67,6 +67,10 @@ CREATE INDEX song_arousal ON Song (arousal);
 CREATE INDEX song_dominance ON Song (dominance);
 CREATE INDEX song_title ON Song (title);
 
+CREATE INDEX quote_valence ON Quote (valence);
+CREATE INDEX quote_arousal ON Quote (arousal);
+CREATE INDEX quote_dominance ON Quote (dominance);
+
 
     Views
 

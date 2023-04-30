@@ -1,40 +1,36 @@
+import { useState } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { CssBaseline, ThemeProvider } from '@mui/material'
-import { indigo, amber } from '@mui/material/colors'
-import { createTheme } from "@mui/material/styles";
+import "bootstrap/dist/css/bootstrap.min.css";
 
-import NavBar from './components/NavBar';
-import HomePage from './pages/HomePage';
-import AlbumsPage from './pages/AlbumsPage';
-import SongsPage from './pages/SongsPage';
-import AlbumInfoPage from './pages/AlbumInfoPage'
+import NavBar from "./components/NavBar";
+import CheckInPage from "./pages/CheckInPage";
+import CreatorsPage from "./pages/CreatorsPage";
+import MoodJourneyPage from "./pages/MoodJourneyPage";
+import PersonalizedContentPage from "./pages/PersonalizedContentPage";
+import WorldPage from "./pages/WorldPage";
 
-// createTheme enables you to customize the look and feel of your app past the default
-// in this case, we only change the color scheme
-export const theme = createTheme({
-  palette: {
-    primary: indigo,
-    secondary: amber,
-  },
-});
-
-// App is the root component of our application and as children contain all our pages
-// We use React Router's BrowserRouter and Routes components to define the pages for
-// our application, with each Route component representing a page and the common
-// NavBar component allowing us to navigate between pages (with hyperlinks)
 export default function App() {
+  const [bgColor, setBgColor] = useState(200);
+
+  const gradientStyle = {
+    background: `linear-gradient(to bottom, hsl(${bgColor}, 100%, 50%), white)`,
+    minHeight: '100vh',
+    display: 'flex',
+    flexDirection: 'column',
+  };
+
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
       <BrowserRouter>
-        <NavBar />
-        <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/albums" element={<AlbumsPage />} />
-          <Route path="/albums/:album_id" element={<AlbumInfoPage />} />
-          <Route path="/songs" element={<SongsPage />} />
-        </Routes>
+        <div className={`w-full`} style={gradientStyle}>
+          <NavBar />
+          <Routes>
+            <Route path="/" element={<CheckInPage color={bgColor} />}/>
+            <Route path="/creators" element={<CreatorsPage />} />
+            <Route path="/moodjourney" element={<MoodJourneyPage />} />
+            <Route path="/content" element={<PersonalizedContentPage />} />
+            <Route path="/world" element={<WorldPage />} />
+          </Routes>
+        </div>
       </BrowserRouter>
-    </ThemeProvider>
   );
 }

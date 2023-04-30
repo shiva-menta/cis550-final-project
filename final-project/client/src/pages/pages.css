@@ -1,0 +1,27 @@
+.btn-custom-black {
+    background-color: black;
+    color: white;
+}
+
+.btn-custom-black:hover,
+.btn-custom-black:focus,
+.btn-custom-black:active {
+    background-color: gray;
+    color: white;
+}
+
+.custom-range-slider .custom-range {
+    height: 16px; /* Adjust this value to match the height of the thumb */
+  }
+  
+  .custom-range-slider .custom-range::-webkit-slider-runnable-track {
+    height: 48px; /* Adjust this value to match the height of the thumb */
+  }
+  
+  .custom-range-slider .custom-range::-moz-range-track {
+    height: 16px; /* Adjust this value to match the height of the thumb */
+  }
+  
+  .custom-range-slider .custom-range::-ms-track {
+    height: 16px; /* Adjust this value to match the height of the thumb */
+  }

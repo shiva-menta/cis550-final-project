@@ -18,6 +18,7 @@ app.get('/artists/:artist_id', routes.artists);
 app.get('/word_title_vad_frequency/:word', routes.word_title_vad_frequency);
 app.get('/country_songs_and_quotes', routes.country_songs_and_quotes);
 app.get('/mood_shift_playlist', routes.mood_shift_playlist);
+app.get('/words', routes.words);
 
 app.listen(config.server_port, () => {
   console.log(`Server running at http://${config.server_host}:${config.server_port}/`)

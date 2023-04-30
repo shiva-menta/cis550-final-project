@@ -342,6 +342,23 @@ const mood_shift_playlist = async function(req, res) {
   })
 }
 
+// Route 10
+const words = async function(req, res) {
+  connection.query(`
+    SELECT w.Word
+    FROM WordVAD w
+  `, (err, data) => {
+    if (err || data.length === 0) {
+      console.log(err);
+      res.json({});
+    } else {
+      res.json(data.map(obj => obj.Word));
+      console.log(res)
+      return res;
+    }
+  })
+}
+
 module.exports = {
   top_words,
   quotes_and_songs,
@@ -350,5 +367,6 @@ module.exports = {
   artists,
   country_songs_and_quotes,
   word_title_vad_frequency,
-  mood_shift_playlist
+  mood_shift_playlist,
+  words,
 }

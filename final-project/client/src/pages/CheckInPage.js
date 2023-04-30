@@ -2,12 +2,13 @@ import React from "react";
 import { useState, useEffect } from "react";
 import ButtonGroup from 'react-bootstrap/ButtonGroup';
 import ToggleButton from 'react-bootstrap/ToggleButton';
-import RangeSlider from 'react-bootstrap-range-slider';
 import 'react-bootstrap-range-slider/dist/react-bootstrap-range-slider.css';
 import Downshift from 'downshift';
 import './pages.css';
 import CustomRangeSlider from "../components/CustomRangeSlider";
-import SongCard from "../components/SongCard";
+
+// top quotes and songs
+// get top_words 
 
 function CheckInPage(props) {
     const color = props.color;
@@ -18,6 +19,7 @@ function CheckInPage(props) {
 
     const [inputSettings, setInputSettings] = useState(false);
     const [searchResults, setSearchResults] = useState([]);
+    const [selectedWord, setSelectedWord] = useState('');
 
     const [valence, setValence] = useState(0);
     const [arousal, setArousal] = useState(0);
@@ -46,6 +48,7 @@ function CheckInPage(props) {
                     <Downshift
                         itemToString={(item) => (item ? item : "")}
                         className='z-10'
+                        onChange={setSelectedWord}
                     >
                         {({
                             getInputProps,

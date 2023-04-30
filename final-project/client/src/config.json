@@ -1,4 +1,6 @@
 {
   "server_host": "localhost",
-  "server_port": "8080"
+  "server_port": "8080",
+  "CLIENT_ID": "85be1e3bbe0149aab04639bf465aaa6d",
+  "CLIENT_SECRET": "bfebc58ac81e41f893f9c0866fa56d94"
 }

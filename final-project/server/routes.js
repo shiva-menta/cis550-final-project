@@ -229,44 +229,45 @@ const word_title_vad_frequency = async function(req, res) {
 const country_songs_and_quotes = async function(req, res) {
   connection.query(`
   	WITH SongCountry AS (
-	    SELECT a.country, s.title as content, s.artist_name_display as creator, s.valence, s.arousal, s.dominance
+	    SELECT a.country, s.title as content, s.artist_name_display as creator, s.valence, s.arousal, s.dominance, s.spotify_id
 	    FROM Song s JOIN Artist a ON s.artist_name_normal=a.name_normal
 	    WHERE country <> 'unknown'
-	),
-    	QuoteCountry AS (
-	    SELECT a.country, q.quote as content, q.author_name_display as creator, q.valence, q.arousal, q.dominance
+	  ),
+    QuoteCountry AS (
+	    SELECT a.country, q.quote as content, q.author_name_display as creator, q.valence, q.arousal, q.dominance, NULL as spotify_id
 	    FROM Quote q JOIN Author a ON q.author_name_normal=a.name_normal
 	    WHERE country <> 'unknown'
-	),
-	AllCountry AS (
-	    SELECT * FROM SongCountry
-	    UNION
-	    SELECT * FROM QuoteCountry
-	),
-	CountryVAD AS
-	    (SELECT country, avg(valence) as avg_val, avg(arousal) as avg_ars, avg(dominance) as avg_dom
-	    FROM AllCountry
-	    GROUP BY country
-	)
+	  ),
+    AllCountry AS (
+      SELECT * FROM SongCountry
+      UNION
+      SELECT * FROM QuoteCountry
+    ),
+    CountryVAD AS
+      (SELECT country, avg(valence) as avg_val, avg(arousal) as avg_ars, avg(dominance) as avg_dom
+      FROM AllCountry
+      GROUP BY country
+    )
 
-	SELECT c.Country, s.content AS title, s.creator as artist, q.content as quote, q.creator as author
-	FROM CountryVAD c
-		JOIN SongCountry s ON c.country = s.country
-		JOIN QuoteCountry q ON c.country = q.country
-	WHERE
+	  SELECT c.Country AS country, s.content AS title, s.creator AS artist, q.content AS quote, q.creator AS author, c.avg_val AS valence, c.avg_ars AS arousal, c.avg_dom AS dominance, s.spotify_id AS spotifyId
+	  FROM CountryVAD c
+		  JOIN SongCountry s ON c.country = s.country
+		  JOIN QuoteCountry q ON c.country = q.country
+	  WHERE
 	    (ABS(s.valence - c.avg_val) + ABS(s.arousal - c.avg_ars) + ABS(s.dominance - c.avg_dom)) <= ALL
-		(
-		    SELECT (ABS(valence - c.avg_val) + ABS(arousal - c.avg_ars) + ABS(dominance - c.avg_dom))
-		    FROM SongCountry
-		    WHERE country = s.country
-		)
-	AND
+        (
+          SELECT (ABS(valence - c.avg_val) + ABS(arousal - c.avg_ars) + ABS(dominance - c.avg_dom))
+          FROM SongCountry
+          WHERE country = s.country
+        )
+	  AND
 	    (ABS(q.valence - c.avg_val) + ABS(q.arousal - c.avg_ars) + ABS(q.dominance - c.avg_dom)) <= ALL
-		(
-		    SELECT (ABS(valence - c.avg_val) + ABS(arousal - c.avg_ars) + ABS(dominance - c.avg_dom))
-		    FROM QuoteCountry
-		    WHERE country = q.country
-		)
+        (
+          SELECT (ABS(valence - c.avg_val) + ABS(arousal - c.avg_ars) + ABS(dominance - c.avg_dom))
+          FROM QuoteCountry
+          WHERE country = q.country
+        )
+    ORDER BY c.Country ASC
   `, (err, data) => {
     if (err || data.length === 0) {
       console.log(err);
@@ -280,19 +281,19 @@ const country_songs_and_quotes = async function(req, res) {
 
 // Route 9: Get Mood Shift Playlist
 const mood_shift_playlist = async function(req, res) {
-  const threshold = req.query.des_arousal ?? 1;
-  const start_word = req.query.start_word;
-  const end_word = req.query.end_word;
+  const threshold = req.query.threshold ?? 1;
+  const start_word = req.query.startWord;
+  const end_word = req.query.endWord;
 
   connection.query(`
   WITH Word1 AS 
     (SELECT 'word1' as word, w1.valence, w1.arousal, w1.dominance
     FROM WordVAD w1
-    WHERE w1.word = ${start_word}),
+    WHERE w1.word = '${start_word}'),
   Word3 AS 
     (SELECT 'word3' as word, w3.valence, w3.arousal, w3.dominance
     FROM WordVAD w3
-    WHERE w3.word = ${end_word}),
+    WHERE w3.word = '${end_word}'),
   Word2 AS (
     SELECT 'word2' as word,
     (w1.valence + w3.valence) / 2 AS valence,
@@ -340,7 +341,6 @@ const mood_shift_playlist = async function(req, res) {
         ABS(w3.arousal - s3.arousal) <= ${threshold} AND
         ABS(w3.dominance - s3.dominance) <= ${threshold})
 
-
     ORDER BY SQRT(
       POW( (w3.valence - s3.valence), 2)
       + POW( (w3.arousal - s3.arousal), 2)
@@ -349,9 +349,10 @@ const mood_shift_playlist = async function(req, res) {
 
     LIMIT 30
     )
-  SELECT *
-  FROM StartingSong, MiddleSong, ThirdSong
+  SELECT s.spotify_id AS id1, s.title AS title1, s.artist_name_display AS artist1, m.spotify_id AS id2, m.title AS title2, m.artist_name_display AS artist2, t.spotify_id AS id3, t.title AS title3, t.artist_name_display AS artist3
+  FROM StartingSong s, MiddleSong m, ThirdSong t
   ORDER BY RAND()
+  LIMIT 10
   `, (err, data) => {
     if (err || data.length === 0) {
       console.log(err);

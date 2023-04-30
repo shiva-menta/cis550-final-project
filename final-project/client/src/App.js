@@ -6,7 +6,6 @@ import NavBar from "./components/NavBar";
 import CheckInPage from "./pages/CheckInPage";
 import CreatorsPage from "./pages/CreatorsPage";
 import MoodJourneyPage from "./pages/MoodJourneyPage";
-import PersonalizedContentPage from "./pages/PersonalizedContentPage";
 import WorldPage from "./pages/WorldPage";
 
 export default function App() {
@@ -26,8 +25,7 @@ export default function App() {
           <Routes>
             <Route path="/" element={<CheckInPage color={bgColor} />}/>
             <Route path="/creators" element={<CreatorsPage />} />
-            <Route path="/moodjourney" element={<MoodJourneyPage />} />
-            <Route path="/content" element={<PersonalizedContentPage />} />
+            <Route path="/moodjourney" element={<MoodJourneyPage color={bgColor} />} />
             <Route path="/world" element={<WorldPage />} />
           </Routes>
         </div>

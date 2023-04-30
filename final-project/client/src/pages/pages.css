@@ -25,3 +25,8 @@
   .custom-range-slider .custom-range::-ms-track {
     height: 16px; /* Adjust this value to match the height of the thumb */
   }
+
+.icon {
+    width: 2rem;
+    height: 2rem;
+}

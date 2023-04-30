@@ -27,12 +27,12 @@ import csv
 import pandas as pd
 
 # quotes_df = pd.read_csv('./cis550-datasets/quotes.csv')
-words_df = pd.read_csv('./cis550-datasets/word_to_vad.csv')
+# words_df = pd.read_csv('./cis550-datasets/word_to_vad.csv')
 
-# word_set = set(words_df['word'].values)
-word_map = {}
-for _, row in words_df.iterrows():
-    word_map[row[0]] = row[1:]
+# # word_set = set(words_df['word'].values)
+# word_map = {}
+# for _, row in words_df.iterrows():
+#     word_map[row[0]] = row[1:]
 
 # filtered_quotes = []
 # count = 0
@@ -49,46 +49,66 @@ for _, row in words_df.iterrows():
 # filtered_quotes_df = pd.DataFrame({'quote': filtered_quotes})
 
 # averages = []
-count = 1
+# count = 1
 
 
-with open('./cis550-datasets/quotes.csv') as quotes:
-    reader = csv.reader(quotes)
+# with open('./cis550-datasets/quotes.csv') as quotes:
+#     reader = csv.reader(quotes)
 
-    with open("./cis550-datasets/results.csv", 'w') as result:
-        fnames = ['quote','author_name_display','author_name_normal','category', 'valence_avg', 'arousal_avg', 'dominance_avg']
-        writer = csv.writer(result)
+#     with open("./cis550-datasets/results.csv", 'w') as result:
+#         fnames = ['quote','author_name_display','author_name_normal','category', 'valence_avg', 'arousal_avg', 'dominance_avg']
+#         writer = csv.writer(result)
                 
-        field = True
-        for row in reader:
-            # print(row)
-            if field:
-                field = False
-            else:
-                quo = row[0]
-                quote_split = re.sub(r"[^a-zA-Z\s]", '', quo.lower().replace("\"", "").replace('/[\W_]+/g', ' ').replace("'", "")).split()
+#         field = True
+#         for row in reader:
+#             # print(row)
+#             if field:
+#                 field = False
+#             else:
+#                 quo = row[0]
+#                 quote_split = re.sub(r"[^a-zA-Z\s]", '', quo.lower().replace("\"", "").replace('/[\W_]+/g', ' ').replace("'", "")).split()
                 
-                # print(count, quo, quote_split)
-                vad = [0, 0, 0]
-                num_words = 0
-                for w in quote_split:
-                    if w in word_map:
-                        num_words += 1
-                        v, a, d = word_map[w]
-                        vad = [vad[0] + v, vad[1] + a, vad[2] + d]
-                try:
-                    vad_avg = [vad[0] / num_words, vad[1] / num_words, vad[2] / num_words]
-                except (ZeroDivisionError):
-                    vad_avg = [-1, -1, -1]
-                    # print(quo, quote_split, num_words)
+#                 # print(count, quo, quote_split)
+#                 vad = [0, 0, 0]
+#                 num_words = 0
+#                 for w in quote_split:
+#                     if w in word_map:
+#                         num_words += 1
+#                         v, a, d = word_map[w]
+#                         vad = [vad[0] + v, vad[1] + a, vad[2] + d]
+#                 try:
+#                     vad_avg = [vad[0] / num_words, vad[1] / num_words, vad[2] / num_words]
+#                 except (ZeroDivisionError):
+#                     vad_avg = [-1, -1, -1]
+#                     # print(quo, quote_split, num_words)
                 
-                writer.writerow(tuple([row[0], row[1], row[2], row[3], vad_avg[0], vad_avg[1], vad_avg[2]]))
+#                 writer.writerow(tuple([row[0], row[1], row[2], row[3], vad_avg[0], vad_avg[1], vad_avg[2]]))
                 
-                count += 1
-                if count % 10000 == 0:
-                    print(count)
-                    print("--", row[0])
-                    print("--", vad_avg)
+#                 count += 1
+#                 if count % 10000 == 0:
+#                     print(count)
+#                     print("--", row[0])
+#                     print("--", vad_avg)
+
+artist_path = "../cis550-datasets/artist_info.csv"
+author_path = "../cis550-datasets/author_info.csv"
+muse_path = "../cis550-datasets/muse_songs.csv"
+quotes_path = "./cis550-datasets/quotesORIG.csv"
+word_vad_path = "../cis550-datasets/word_to_vad.csv"
+
+with open("./cis550-datasets/quotes.csv", 'r') as f:
+    reader = csv.reader(f)
+
+    with open("./cis550-datasets/results.csv", "w") as f2:
+        writer = csv.writer(f2)
+        for r in reader:  
+            writer.writerow([*r[:3], *r[4:]])
+            
+
+
+
+
+
 
 
 # print(re.sub(r"[^a-zA-Z\s]", '', "Hello,$$ there m'y name is J.K. rool^ing../ trut hta".lower().replace('/[\W_]+/g', ' ').replace("'", "")).split())

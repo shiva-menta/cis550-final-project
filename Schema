@@ -65,6 +65,7 @@ CREATE INDEX author_country ON Author (country);
 CREATE INDEX song_valence ON Song (valence);
 CREATE INDEX song_arousal ON Song (arousal);
 CREATE INDEX song_dominance ON Song (dominance);
+CREATE INDEX song_title ON Song (title);
 
 
     Views

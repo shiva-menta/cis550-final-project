@@ -22,7 +22,7 @@
 .custom-range-slider .slider-thumb {
   width: 20px; /* Adjust thumb width if necessary */
   height: var(--thumb-size); /* Adjust thumb height if necessary */
-  background-color: #007bff;
+  background-color: #000000;
   border-radius: 5px;
   position: absolute;
   cursor: pointer;

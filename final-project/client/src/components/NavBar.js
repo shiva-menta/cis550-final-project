@@ -7,7 +7,7 @@ function NavBar() {
       <div className="w-36 text-center font-bold"><Link to="/moodjourney" className="no-underline text-white hover:opacity-50">Mood Journey</Link></div>
       <div className="w-36 text-center font-bold"><Link to="/explorecreators" className="no-underline text-white hover:opacity-50">Creators</Link></div>
       <div className="w-36 text-center font-bold"><Link to="/world" className="no-underline text-white hover:opacity-50">World Emotion</Link></div>
-      <div className="w-36 text-center font-bold"><Link to="/titleinfo" className="no-underline text-white hover:opacity-50">Title Info</Link></div>
+      <div className="w-36 text-center font-bold"><Link to="/titlecomparisons" className="no-underline text-white hover:opacity-50">Title Comparisons</Link></div>
     </div>
   );
 }

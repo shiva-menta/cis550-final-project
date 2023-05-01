@@ -1,9 +1,9 @@
 {
-  "rds_host": "final-project.clgejashwtsf.us-east-1.rds.amazonaws.com",
-  "rds_port": "3306",
-  "rds_user": "admin",
-  "rds_password" : "albertcharliecobyshiva",
-  "rds_db": "project",
-  "server_host": "localhost",
-  "server_port":"8080"
+    "rds_host": "final-project.clgejashwtsf.us-east-1.rds.amazonaws.com",
+    "rds_port": "3306",
+    "rds_user": "admin",
+    "rds_password" : "albertcharliecobyshiva",
+    "rds_db": "project",
+    "server_host": "localhost",
+    "server_port":"8080"
 }

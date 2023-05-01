@@ -1,105 +1,112 @@
+// CHECK-IN PAGE (MAIN)
+
+// Involved Queries:
+//     Route 2 (Get Top Quotes and Songs Given VAD Values)
+//     Route Y (Get VAD Values for Valid Word)
+//     Route Z (Get All Valid Words)
+
+// Imports
 import React from "react";
 import { useState, useEffect } from "react";
+
+import './pages.css';
+
 import ButtonGroup from 'react-bootstrap/ButtonGroup';
 import ToggleButton from 'react-bootstrap/ToggleButton';
-import Downshift from 'downshift';
-import './pages.css';
-import CustomRangeSlider from "../components/CustomRangeSlider";
 
+import TypeInDropdown from "../components/TypeInDropdown";
+import CustomRangeSlider from "../components/CustomRangeSlider";
 import QuoteCard from "../components/QuoteCard";
 import SongCard from "../components/SongCard";
 
-import ApiInfo from '../config.json'
-import spotifyIdToJSON from "../utils";
+import { getAllWords, getWordToVad, getTopQuotesAndSongs } from "../api/wordVADInfo";
+import { authenticate } from "../api/spotifyInfo";
 
-// Spotify ID Imports
-const CLIENT_ID = ApiInfo['CLIENT_ID'];
-const CLIENT_SECRET = ApiInfo['CLIENT_SECRET'];
-
-// top quotes and songs
-// top word
-
-function CheckInPage(props) {
-    const color = props.color;
-
-    const gradientStyle = {
-        background: `hsl(${color}, 100%, 35%, 1)`,
-    };
-
-    const [inputSettings, setInputSettings] = useState(false);
-    const [searchResults, setSearchResults] = useState([]);
-    const [accessToken, setAccessToken] = useState("");
-    const [selectedWord, setSelectedWord] = useState('');
-    const [showResults, setShowResults] = useState(false);
-    const [selectedQuotes, setSelectedQuotes] = useState([]);
-    const [selectedSongs, setSelectedSongs] = useState([]);
-
+// Main Component
+function CheckInPage({ color, setColor }) {
+    // State Hooks
     const [valence, setValence] = useState(0);
     const [arousal, setArousal] = useState(0);
     const [dominance, setDominance] = useState(0);
+    const [selectedWord, setSelectedWord] = useState('');
 
+    const [inputSettings, setInputSettings] = useState(false);
+    const [showResults, setShowResults] = useState(false);
+
+    const [accessToken, setAccessToken] = useState("");
+    const [searchResults, setSearchResults] = useState([]);
+    const [selectedQuotes, setSelectedQuotes] = useState([]);
+    const [selectedSongs, setSelectedSongs] = useState([]);
+
+    // Effect Hook
+    useEffect(() => {
+        getAllWords()
+            .then(data => setSearchResults(data));
+        authenticate()
+            .then(data => setAccessToken(data));
+    }, []);
+
+    // Constants
+    const gradientStyle = {
+        background: `hsl(${color}, 100%, 35%, 1)`,
+    };
     const radios = [
         { name: 'Words', value: true },
         { name: 'Sliders', value: false }
-    ]
+    ];
+    const sliders = [
+        { name: 'Valence', value: valence, onChange: setValence, leftLabel: 'Negative', rightLabel: 'Positive' },
+        { name: 'Arousal', value: arousal, onChange: setArousal, leftLabel: 'Low Energy', rightLabel: 'High Energy' },
+        { name: 'Dominance', value: dominance, onChange: setDominance, leftLabel: 'Powerless', rightLabel: 'Powerful' },
+    ];
 
-    useEffect(() => {
-        const search = async () => {
-            const res = await fetch(`http://localhost:8080/words`);
-            const data = await res.json();
-            setSearchResults(data);
-        }
-        search();
-
-        var authParameters = {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/x-www-form-urlencoded'
-            },
-            body: 'grant_type=client_credentials&client_id=' + CLIENT_ID + '&client_secret=' + CLIENT_SECRET
-          }
-        fetch('https://accounts.spotify.com/api/token', authParameters) 
-            .then(result => result.json())
-            .then(data => setAccessToken(data.access_token)) 
-    }, []);
-
+    // Get Personalized Results Function
+    function vadToHue(valence, arousal, dominance) {
+        const normalizedValence = (valence / 10 - 0.5) * 2;
+        const normalizedArousal = (arousal / 10 - 0.5) * 2;
+        const normalizedDominance = (dominance / 10 - 0.5) * 2;
+      
+        const weightedSum = (0.6 * normalizedValence) + (0.3 * normalizedArousal) + (0.1 * normalizedDominance);
+      
+        const hue = ((weightedSum + 1) / 2) * 360;
+        return hue;
+    }      
     const getPersonalizedResults = async () => {
         let tempValence = valence;
         let tempArousal = arousal;
         let tempDominance = dominance;
 
+        // Get content from VAD values
+        const getTopContent = async () => {
+            getTopQuotesAndSongs(tempValence, tempArousal, tempDominance, accessToken)
+                .then(data => {
+                    setSelectedQuotes(data.quotes);
+                    setSelectedSongs(data.songs);
+                    setShowResults(true);
+                });
+        };
+
+        // If in words mode, get VAD values for selected word
         if (inputSettings) {
             if (selectedWord === '') {
                 alert('Please select a word');
                 return;
             }
-            const res = await fetch(`http://localhost:8080/word_to_vad/${selectedWord}`);
-            const data = await res.json();
-            
-            tempValence = data[0].valence;
-            tempArousal = data[0].arousal;
-            tempDominance = data[0].dominance;
-        }
 
-        const getTopContent = async () => {
-            const res = await fetch(`http://localhost:8080/quotes_and_songs/${tempValence}/${tempArousal}/${tempDominance}`);
-            const data = await res.json();
-            const newData = await Promise.all(data.songs.map(async (item) => {
-                const { link, image } = await spotifyIdToJSON(item.spotifyId, accessToken);
-                return {
-                    ...item,
-                    link,
-                    image,
-                };
-            }));
-            
-            setSelectedQuotes(data.quotes);
-            setSelectedSongs(newData);
+            getWordToVad(selectedWord)
+                .then(data => {
+                    tempValence = data[0].valence;
+                    tempArousal = data[0].arousal;
+                    tempDominance = data[0].dominance;
+                })
+                .then(() => getTopContent());
+        } else {
+            getTopContent();
         }
-        getTopContent();
-        setShowResults(true);
+        setColor(vadToHue(tempValence, tempArousal, tempDominance));
     }
 
+    // Render Function
     return (
         <div className="p-8 h-full w-full flex flex-col text-center items-center gap-8">
             {showResults && (
@@ -109,7 +116,7 @@ function CheckInPage(props) {
                         <h2 className="text-white">Top Quotes</h2>
                         <div className="flex gap-4 items-center overflow-x-auto mt-4">
                             {selectedQuotes.map((quote, idx) =>
-                                <div className="pb-4">
+                                <div className="pb-4" key={idx}>
                                     <QuoteCard key={`quote_${idx}`} quote={quote.quote} author={quote.author} />
                                 </div>
                             )}
@@ -117,7 +124,7 @@ function CheckInPage(props) {
                         <h2 className="text-white mt-8">Top Songs</h2>
                         <div className="flex gap-4 items-center overflow-x-auto mt-4">
                             {selectedSongs.map((song, idx) => 
-                                <div className="pb-4">
+                                <div className="pb-4" key={idx}>
                                     <SongCard key={`song_${idx}`} title={song.title} artist={song.artist} image={song.image} link={song.link}/>
                                 </div>
                             )}
@@ -131,109 +138,26 @@ function CheckInPage(props) {
                     {inputSettings && (
                         <div className="text-left w-full h-80">
                             <h2 className="text-white">Describe In Words</h2>
-                            <Downshift
-                                itemToString={(item) => (item ? item : "")}
-                                className='z-10'
-                                onChange={setSelectedWord}
-                            >
-                                {({
-                                    getInputProps,
-                                    getItemProps,
-                                    getMenuProps,
-                                    isOpen,
-                                    inputValue,
-                                    highlightedIndex,
-                                }) => {
-                                    const filteredResults = searchResults.filter(result =>
-                                        result.toLowerCase().startsWith(inputValue.toLowerCase())
-                                    )
-                                    .slice(0, 10);
-
-                                    return (
-                                        <div className="relative mt-4">
-                                            <input
-                                                {...getInputProps({
-                                                    placeholder: "Word that describes your mood...",
-                                                    className:
-                                                        "block w-full p-2 text-lg text-gray-900 appearance-none focus:outline-none bg-transparent",
-                                                })}
-                                            />
-                                            <div className="absolute bottom-0 left-0 w-full h-0.5 bg-gray-900 animate-pulse"></div>
-                                            <ul
-                                                {...getMenuProps({
-                                                    className: `${
-                                                        isOpen ? "block" : "hidden"
-                                                    } absolute bg-white border border-gray-300 w-full mt-2 text-left z-10`,
-                                                })}
-                                            >
-                                                {isOpen &&
-                                                    filteredResults.map((result, index) => (
-                                                        <li
-                                                            {...getItemProps({
-                                                                key: index,
-                                                                index,
-                                                                item: result,
-                                                                style: {
-                                                                    backgroundColor:
-                                                                        highlightedIndex === index
-                                                                            ? "lightgray"
-                                                                            : "white",
-                                                                    fontWeight:
-                                                                        highlightedIndex === index
-                                                                            ? "bold"
-                                                                            : "normal",
-                                                                    padding: "2",
-                                                                    cursor: "pointer",
-                                                                },
-                                                            })}
-                                                        >
-                                                            {result}
-                                                        </li>
-                                                    ))}
-                                            </ul>
-                                        </div>
-                                    );
-                                }}
-                            </Downshift> 
+                            <TypeInDropdown onChangeFunc={setSelectedWord} results={searchResults} defaultText={"Your current mood..."} />
                         </div>
                     )}
                     {!inputSettings && (
                         <div className="text-left w-full h-80 flex flex-col gap-4">
                             <h2 className="text-white">Describe In Numbers</h2>
-                            <div className="flex items-center justify-between">
-                                <h4 className="text-white">Valence</h4>
-                                <CustomRangeSlider
-                                    className="w-96"
-                                    min={0}
-                                    max={10}
-                                    value={valence}
-                                    onChange={(newValue) => setValence(newValue)}
-                                    leftLabel="Negative"
-                                    rightLabel="Positive"
-                                />
-                            </div>
-                            <div className="flex items-center justify-between">
-                                <h4 className="text-white">Arousal</h4>
-                                <CustomRangeSlider
-                                    min={0}
-                                    max={10}
-                                    value={arousal}
-                                    onChange={(newValue) => setArousal(newValue)}
-                                    leftLabel="Low Energy"
-                                    rightLabel="High Energy"
-                                />
-                            </div>
-                            <div className="flex items-center justify-between">
-                                <h4 className="text-white">Dominance</h4>
-                                <CustomRangeSlider
-                                    min={0}
-                                    max={10}
-                                    value={dominance}
-                                    onChange={(newValue) => setDominance(newValue)}
-                                    leftLabel="Powerless"
-                                    rightLabel="Powerful"
-                                />
-                            </div>
+                            {sliders.map((slider, idx) => (
+                                <div className="flex items-center justify-between" key={idx}>
+                                    <h4 className="text-white w-40">{slider.name}</h4>
+                                    <CustomRangeSlider
+                                        className="w-full"
+                                        min={0}
+                                        max={10}
+                                        value={slider.value}
+                                        onChange={(newValue) => slider.onChange(newValue)}
+                                        leftLabel={slider.leftLabel}
+                                        rightLabel={slider.rightLabel}
+                                    />
+                                </div>
+                            ))}
                         </div>
                     )}
                     <ButtonGroup className="w-48 mt-8">

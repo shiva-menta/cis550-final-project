@@ -1,46 +1,36 @@
+// WORLD PAGE
+
+// Involved Queries:
+//     Route X (Get Top Song, Quote, and VAD Values for Each Country)
+
+// Imports
 import React from "react";
 import { useState, useEffect } from "react";
+
 import SongCard from "../components/SongCard";
 import QuoteCard from "../components/QuoteCard";
-import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis } from 'recharts';
-import ApiInfo from '../config.json'
-import spotifyIdToJSON from "../utils";
+import { ResponsiveContainer, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis } from 'recharts';
 
-// Spotify ID Imports
-const CLIENT_ID = ApiInfo['CLIENT_ID'];
-const CLIENT_SECRET = ApiInfo['CLIENT_SECRET'];
+import { authenticate } from "../api/spotifyInfo";
+import { getCountryData } from "../api/wordVADInfo";
 
+// Main Component
 function WorldPage() {
+    // State Hooks
     const [results, setResults] = useState([]);
 
+    // Effect Hook
     useEffect(() => {
         let accessToken = "";
-        const getCountryInfo = async () => {
-            const res = await fetch(`http://localhost:8080/country_songs_and_quotes`);
-            const data = await res.json();
-            const newData = await Promise.all(data.map(async (item) => {
-                const { link, image } = await spotifyIdToJSON(item.spotifyId, accessToken);
-                return {
-                    ...item,
-                    link,
-                    image,
-                };
-            }));
-            setResults(newData);
-        }
-        var authParameters = {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/x-www-form-urlencoded'
-            },
-            body: 'grant_type=client_credentials&client_id=' + CLIENT_ID + '&client_secret=' + CLIENT_SECRET
-          }
-        fetch('https://accounts.spotify.com/api/token', authParameters) 
-            .then(result => result.json())
-            .then(data => accessToken = data.access_token)
-            .then(getCountryInfo())     
-    }, []);
+        authenticate()
+            .then(data => {
+                accessToken = data.access_token;
+                return getCountryData(accessToken);
+            })
+            .then(data => setResults(data));
+    }, []);    
 
+    // Render Function
     return (    
         <div className="p-8 h-full w-full flex flex-col text-center items-center gap-8">
             <h1 className="text-white mb-4">The World By Emotion</h1>

@@ -1,6 +1,8 @@
+// imports
 const mysql = require('mysql')
 const config = require('./config.json')
 
+// create connection
 const connection = mysql.createConnection({
   host: config.rds_host,
   user: config.rds_user,
@@ -10,30 +12,122 @@ const connection = mysql.createConnection({
 });
 connection.connect((err) => err && console.log(err));
 
-// Route 1: Get /top_word given VAD values
-const top_words = async function(req, res) {
-  const valence = req.params.valence;
-  const arousal = req.params.arousal;
-  const dominance = req.params.dominance;
+// ROUTES
 
+// Route 1: Get All Words
+const words = async function(req, res) {
   connection.query(`
     SELECT w.Word
     FROM WordVAD w
-    ORDER BY POWER(w.Valence - ${valence}, 2) 
-    + POWER(w.Arousal - ${arousal}, 2) 
-    + POWER(w.Dominance - ${dominance}, 2) ASC
-    LIMIT 1
   `, (err, data) => {
     if (err || data.length === 0) {
       console.log(err);
       res.json({});
     } else {
       res.json(data.map(obj => obj.Word));
+      console.log(res)
       return res;
     }
   })
 }
 
+// Route 2: Get Summarized Statistics for an Artist
+const artists = async function(req, res) {
+  const artist_name = req.params.artist_id;
+
+  connection.query(`
+    SELECT av.artist_name_display,
+      av.avg_val,
+      av.avg_ars,
+      av.avg_dom,
+      (
+          SELECT vw1.word
+          FROM WordVAD vw1
+          ORDER BY POWER(vw1.valence - av.avg_val, 2) + 
+                  POWER(vw1.arousal - av.avg_ars, 2) + POWER(vw1.dominance - av.avg_dom, 2) ASC
+          LIMIT 1
+      ) AS closest_word
+    FROM ArtistsVAD av
+    WHERE av.artist_name_display = '${artist_name}';
+  `, (err, data) => {
+    if (err || data.length === 0) {
+      console.log(err);
+      res.json({});
+    } else {
+      res.json(data);
+      return res;
+    }
+  })
+}
+
+// Route 3: Get Summarized Statistics for an Author
+const authors = async function(req, res) {
+  const author = req.params.author_id;
+
+  connection.query(`
+    SELECT au.author_name_display,
+      au.avg_val,
+      au.avg_ars,
+      au.avg_dom,
+      (
+          SELECT vw1.word
+          FROM WordVAD vw1
+          ORDER BY POWER(vw1.valence - au.avg_val, 2) + 
+                  POWER(vw1.arousal - au.avg_ars, 2) + POWER(vw1.dominance - au.avg_dom, 2) ASC
+          LIMIT 1
+      ) AS closest_word
+    FROM AuthorsVAD au
+    WHERE au.author_name_display = '${author}';
+  `, (err, data) => {
+    if (err || data.length === 0) {
+      console.log(err);
+      res.json({});
+    } else {
+      res.json(data);
+      return res;
+    }
+  })
+}
+
+// Route 4: Get All Songs by an Artist
+const artist_songs = async function(req, res) {
+  const artist_name = req.params.artist_name;
+
+  connection.query(`
+    SELECT s.artist_name_display AS artist, s.title AS title, s.spotify_id AS spotifyId
+    FROM Song s
+    WHERE s.artist_name_display = '${artist_name}';
+  `, (err, data) => {
+    if (err || data.length === 0) {
+      console.log(err);
+      res.json({});
+    } else {
+      res.json(data);
+      return res;
+    }
+  })
+}
+
+// Route 5: Get All Quotes by an Author
+const author_quotes = async function(req, res) {
+  const author_name = req.params.author_name;
+
+  connection.query(`
+    SELECT q.author_name_display AS author, q.quote
+    FROM Quote q
+    WHERE q.author_name_display = '${author_name}';
+  `, (err, data) => {
+    if (err || data.length === 0) {
+      console.log(err);
+      res.json({});
+    } else {
+      res.json(data);
+      return res;
+    }
+  })
+}
+
+// Route 6: Get the VAD values of a Word
 const word_to_vad = async function(req, res) {
   const word = req.params.word;
 
@@ -52,7 +146,7 @@ const word_to_vad = async function(req, res) {
   })
 }
 
-// Route 2: Get top quotes and songs given VAD values
+// Route 7: Get the Top Ten Quotes and Songs for a VAD Set
 const quotes_and_songs = async function(req, res) {
   const valence = req.params.valence;
   const arousal = req.params.arousal;
@@ -102,7 +196,7 @@ const quotes_and_songs = async function(req, res) {
   }
 }
 
-// Route 3: Get /creators_vad – All creators that have produced content within a specific VAD range
+// Route 8: Get All Creators who have an Average VAD within a certain range
 const creators_vad = async function(req, res) {
   const prefix = req.query.prefix ?? "";
   const min_valence = req.query.min_valence ?? 0;
@@ -139,7 +233,7 @@ const creators_vad = async function(req, res) {
   })
 }
 
-// Route 4: Get /artist_similarity between two artists
+// Route 9: Get Similarity Scoring Between Two Artists
 const creator_similarity = async function(req, res) {
   const creator1_name = req.params.creator1_name;
   const creator2_name = req.params.creator2_name;
@@ -162,144 +256,50 @@ const creator_similarity = async function(req, res) {
   })
 }
 
-// Route 5: Get /artists/:artist_id
-const artists = async function(req, res) {
-  const artist_name = req.params.artist_id;
-
-  connection.query(`
-    SELECT av.artist_name_display,
-      av.avg_val,
-      av.avg_ars,
-      av.avg_dom,
-      (
-          SELECT vw1.word
-          FROM WordVAD vw1
-          ORDER BY POWER(vw1.valence - av.avg_val, 2) + 
-                  POWER(vw1.arousal - av.avg_ars, 2) + POWER(vw1.dominance - av.avg_dom, 2) ASC
-          LIMIT 1
-      ) AS closest_word
-    FROM ArtistsVAD av
-    WHERE av.artist_name_display = '${artist_name}';
-  `, (err, data) => {
-    if (err || data.length === 0) {
-      console.log(err);
-      res.json({});
-    } else {
-      res.json(data);
-      return res;
-    }
-  })
-}
-
-const author_quotes = async function(req, res) {
-  const author_name = req.params.author_name;
-
-  connection.query(`
-    SELECT q.author_name_display AS author, q.quote
-    FROM Quote q
-    WHERE q.author_name_display = '${author_name}';
-  `, (err, data) => {
-    if (err || data.length === 0) {
-      console.log(err);
-      res.json({});
-    } else {
-      res.json(data);
-      return res;
-    }
-  })
-}
-
-const artist_songs = async function(req, res) {
-  const artist_name = req.params.artist_name;
-
-  connection.query(`
-    SELECT s.artist_name_display AS artist, s.title AS title, s.spotify_id AS spotifyId
-    FROM Song s
-    WHERE s.artist_name_display = '${artist_name}';
-  `, (err, data) => {
-    if (err || data.length === 0) {
-      console.log(err);
-      res.json({});
-    } else {
-      res.json(data);
-      return res;
-    }
-  })
-}
-
-// Route 5: Get /artists/:artist_id
-const authors = async function(req, res) {
-  const author = req.params.author_id;
-
-  connection.query(`
-    SELECT au.author_name_display,
-      au.avg_val,
-      au.avg_ars,
-      au.avg_dom,
-      (
-          SELECT vw1.word
-          FROM WordVAD vw1
-          ORDER BY POWER(vw1.valence - au.avg_val, 2) + 
-                  POWER(vw1.arousal - au.avg_ars, 2) + POWER(vw1.dominance - au.avg_dom, 2) ASC
-          LIMIT 1
-      ) AS closest_word
-    FROM AuthorsVAD au
-    WHERE au.author_name_display = '${author}';
-  `, (err, data) => {
-    if (err || data.length === 0) {
-      console.log(err);
-      res.json({});
-    } else {
-      res.json(data);
-      return res;
-    }
-  })
-}
-
-// Route 7: Find pieces with song in title and how frequently they're in a certain threshold of word's VAD
+// Route 10: Get Songs / Quotes with Word in Title and Frequency of VAD within piece's range
 const word_title_vad_frequency = async function(req, res) {
   const word = req.params.word;
   const tolerance = req.params.tolerance;
+  console.log(word, tolerance);
 
   connection.query(`
-	WITH Selected_Word_VAD AS (
-		SELECT Valence, Arousal, Dominance
-		FROM WordVAD
-		WHERE word = '${word}'
-	),
-	Filtered_Songs AS (
-		SELECT *
-		FROM Song
-		WHERE LOWER(title) LIKE '%${word}%'
-	),
-	Filtered_Quotes AS (
-		SELECT *
-		FROM Quote
-		WHERE LOWER(quote) LIKE '%${word}%'
-	),
-	Songs_In_Range AS (
-		SELECT s.*
-		FROM Filtered_Songs s, Selected_Word_VAD v
-		WHERE ABS(s.Valence - v.Valence) <= ${tolerance}
-		AND ABS(s.Arousal - v.Arousal) <= ${tolerance}
-		AND ABS(s.Dominance - v.Dominance) <= ${tolerance}
-	),
-	Quotes_In_Range AS (
-		SELECT q.*
-		FROM Filtered_Quotes q, Selected_Word_VAD v
-		WHERE ABS(q.valence - v.Valence) <= ${tolerance}
-		AND ABS(q.arousal - v.Arousal) <= ${tolerance}
-		AND ABS(q.dominance - v.Dominance) <= ${tolerance}
-	)
+    WITH Selected_Word_VAD AS (
+      SELECT Valence, Arousal, Dominance
+      FROM WordVAD
+      WHERE word = '${word}'
+    ),
+    Filtered_Songs AS (
+      SELECT *
+      FROM Song
+      WHERE LOWER(title) LIKE '%${word}%'
+    ),
+    Filtered_Quotes AS (
+      SELECT *
+      FROM Quote
+      WHERE LOWER(quote) LIKE '%${word}%'
+    ),
+    Songs_In_Range AS (
+      SELECT s.*
+      FROM Filtered_Songs s, Selected_Word_VAD v
+      WHERE ABS(s.Valence - v.Valence) <= ${tolerance}
+      AND ABS(s.Arousal - v.Arousal) <= ${tolerance}
+      AND ABS(s.Dominance - v.Dominance) <= ${tolerance}
+    ),
+    Quotes_In_Range AS (
+      SELECT q.*
+      FROM Filtered_Quotes q, Selected_Word_VAD v
+      WHERE ABS(q.valence - v.Valence) <= ${tolerance}
+      AND ABS(q.arousal - v.Arousal) <= ${tolerance}
+      AND ABS(q.dominance - v.Dominance) <= ${tolerance}
+    )
 
-	SELECT 'Song' AS Type, (COUNT(*) * 1.0) / (SELECT COUNT(*) FROM Filtered_Songs) AS Frequency
-	FROM Songs_In_Range
+    SELECT 'Song' AS Type, (COUNT(*) * 1.0) / (SELECT COUNT(*) FROM Filtered_Songs) AS Frequency
+    FROM Songs_In_Range
 
-	UNION ALL
+    UNION ALL
 
-	SELECT 'Quotes' AS Type, (COUNT(*) * 1.0) / (SELECT COUNT(*) FROM Filtered_Quotes) AS Frequency
-	FROM Quotes_In_Range
-
+    SELECT 'Quotes' AS Type, (COUNT(*) * 1.0) / (SELECT COUNT(*) FROM Filtered_Quotes) AS Frequency
+    FROM Quotes_In_Range
   `, (err, data) => {
     if (err || data.length === 0) {
       console.log(err);
@@ -311,7 +311,81 @@ const word_title_vad_frequency = async function(req, res) {
   })
 }
 
-// Route 8: Get Signature Song & Quote of a Country
+// Route 11: Get Songs with Higher VAD in Title than in Song
+const songs_higher_title_vad = async function(req, res) {
+  connection.query(`
+    WITH RECURSIVE TitleWords (spotify_id, Title, Word, Rest) AS (
+      SELECT
+        spotify_id,
+        Title,
+        TRIM(SUBSTRING_INDEX(Title, ' ', 1)) AS Word,
+        TRIM(SUBSTRING(Title, LENGTH(SUBSTRING_INDEX(Title, ' ', 1)) + 2)) AS Rest
+      FROM
+        Song
+      UNION ALL
+      SELECT
+        spotify_id,
+        Title,
+        TRIM(SUBSTRING_INDEX(Rest, ' ', 1)) AS Word,
+        TRIM(SUBSTRING(Rest, LENGTH(SUBSTRING_INDEX(Rest, ' ', 1)) + 2)) AS Rest
+      FROM
+        TitleWords
+      WHERE
+        Rest != ''
+    ),
+    TitleWordVAD AS (
+      SELECT
+        TitleWords.spotify_id,
+        TitleWords.Title,
+        WordVAD.Valence,
+        WordVAD.Arousal,
+        WordVAD.Dominance
+      FROM
+        TitleWords
+        JOIN WordVAD ON TitleWords.Word = WordVAD.Word
+    ),
+    TitleVAD AS (
+      SELECT
+        spotify_id,
+        Title,
+        AVG(Valence) AS TitleValence,
+        AVG(Arousal) AS TitleArousal,
+        AVG(Dominance) AS TitleDominance
+      FROM
+        TitleWordVAD
+      GROUP BY
+        spotify_id,
+        Title
+    )
+   
+    SELECT
+      S.Title,
+      S.Valence,
+      S.Arousal,
+      S.Dominance,
+      S.artist_name_display AS Artist,
+      VAD.TitleValence,
+      VAD.TitleArousal,
+      VAD.TitleDominance
+    FROM
+      Song S
+      JOIN TitleVAD VAD ON S.Title = VAD.Title
+    WHERE
+      VAD.TitleValence > S.Valence
+      AND VAD.TitleArousal > S.Arousal
+      AND VAD.TitleDominance > S.Dominance;
+  `, (err, data) => {
+    if (err || data.length === 0) {
+      console.log(err);
+      res.json({});
+    } else {
+      res.json(data);
+      return res;
+    }
+  })
+}
+
+// Route 12: Get Signature Song & Quote of a Country
 const country_songs_and_quotes = async function(req, res) {
   connection.query(`
   	WITH SongCountry AS (
@@ -365,80 +439,80 @@ const country_songs_and_quotes = async function(req, res) {
   })
 }
 
-// Route 9: Get Mood Shift Playlist
+// Route 13: Get Mood Shift Playlist
 const mood_shift_playlist = async function(req, res) {
   const threshold = req.query.threshold ?? 1;
   const start_word = req.query.startWord;
   const end_word = req.query.endWord;
 
   connection.query(`
-  WITH Word1 AS 
-    (SELECT 'word1' as word, w1.valence, w1.arousal, w1.dominance
-    FROM WordVAD w1
-    WHERE w1.word = '${start_word}'),
-  Word3 AS 
-    (SELECT 'word3' as word, w3.valence, w3.arousal, w3.dominance
-    FROM WordVAD w3
-    WHERE w3.word = '${end_word}'),
-  Word2 AS (
-    SELECT 'word2' as word,
-    (w1.valence + w3.valence) / 2 AS valence,
-    (w1.arousal + w3.arousal) / 2 AS arousal,
-    (w1.dominance + w3.dominance) / 2 AS dominance
-    FROM Word1 w1, Word3 w3
-    ),
-  StartingSong AS (
-    SELECT spotify_id, title, artist_name_display
-    FROM Song s1
-      JOIN Word1 w1 ON (
-        ABS(w1.valence - s1.valence) <= ${threshold} AND
-        ABS(w1.arousal - s1.arousal) <= ${threshold} AND
-        ABS(w1.dominance - s1.dominance) <= ${threshold})
+    WITH Word1 AS 
+      (SELECT 'word1' as word, w1.valence, w1.arousal, w1.dominance
+      FROM WordVAD w1
+      WHERE w1.word = '${start_word}'),
+    Word3 AS 
+      (SELECT 'word3' as word, w3.valence, w3.arousal, w3.dominance
+      FROM WordVAD w3
+      WHERE w3.word = '${end_word}'),
+    Word2 AS (
+      SELECT 'word2' as word,
+      (w1.valence + w3.valence) / 2 AS valence,
+      (w1.arousal + w3.arousal) / 2 AS arousal,
+      (w1.dominance + w3.dominance) / 2 AS dominance
+      FROM Word1 w1, Word3 w3
+      ),
+    StartingSong AS (
+      SELECT spotify_id, title, artist_name_display
+      FROM Song s1
+        JOIN Word1 w1 ON (
+          ABS(w1.valence - s1.valence) <= ${threshold} AND
+          ABS(w1.arousal - s1.arousal) <= ${threshold} AND
+          ABS(w1.dominance - s1.dominance) <= ${threshold})
 
-    ORDER BY SQRT(
-    POW( (w1.valence - s1.valence), 2)
-    + POW( (w1.arousal - s1.arousal), 2)
-    + POW( (w1.dominance - s1.dominance), 2)
-    )
+      ORDER BY SQRT(
+      POW( (w1.valence - s1.valence), 2)
+      + POW( (w1.arousal - s1.arousal), 2)
+      + POW( (w1.dominance - s1.dominance), 2)
+      )
 
-    LIMIT 30
-    ),
-  MiddleSong AS (
-    SELECT spotify_id, title, artist_name_display
-    FROM Song s2
-      JOIN Word2 w2 ON (
-        ABS(w2.valence - s2.valence) <= ${threshold} AND
-        ABS(w2.arousal - s2.arousal) <= ${threshold} AND
-        ABS(w2.dominance - s2.dominance) <= ${threshold})
+      LIMIT 30
+      ),
+    MiddleSong AS (
+      SELECT spotify_id, title, artist_name_display
+      FROM Song s2
+        JOIN Word2 w2 ON (
+          ABS(w2.valence - s2.valence) <= ${threshold} AND
+          ABS(w2.arousal - s2.arousal) <= ${threshold} AND
+          ABS(w2.dominance - s2.dominance) <= ${threshold})
 
-    ORDER BY SQRT(
-      POW( (w2.valence - s2.valence), 2)
-      + POW( (w2.arousal - s2.arousal), 2)
-      + POW( (w2.dominance - s2.dominance), 2)
-    )
+      ORDER BY SQRT(
+        POW( (w2.valence - s2.valence), 2)
+        + POW( (w2.arousal - s2.arousal), 2)
+        + POW( (w2.dominance - s2.dominance), 2)
+      )
 
-    LIMIT 30
-    ),
-  ThirdSong AS (
-    SELECT spotify_id, title, artist_name_display
-    FROM Song s3
-      JOIN Word3 w3 ON (
-        ABS(w3.valence - s3.valence) <= ${threshold} AND
-        ABS(w3.arousal - s3.arousal) <= ${threshold} AND
-        ABS(w3.dominance - s3.dominance) <= ${threshold})
+      LIMIT 30
+      ),
+    ThirdSong AS (
+      SELECT spotify_id, title, artist_name_display
+      FROM Song s3
+        JOIN Word3 w3 ON (
+          ABS(w3.valence - s3.valence) <= ${threshold} AND
+          ABS(w3.arousal - s3.arousal) <= ${threshold} AND
+          ABS(w3.dominance - s3.dominance) <= ${threshold})
 
-    ORDER BY SQRT(
-      POW( (w3.valence - s3.valence), 2)
-      + POW( (w3.arousal - s3.arousal), 2)
-      + POW( (w3.dominance - s3.dominance), 2)
-    )
+      ORDER BY SQRT(
+        POW( (w3.valence - s3.valence), 2)
+        + POW( (w3.arousal - s3.arousal), 2)
+        + POW( (w3.dominance - s3.dominance), 2)
+      )
 
-    LIMIT 30
-    )
-  SELECT s.spotify_id AS id1, s.title AS title1, s.artist_name_display AS artist1, m.spotify_id AS id2, m.title AS title2, m.artist_name_display AS artist2, t.spotify_id AS id3, t.title AS title3, t.artist_name_display AS artist3
-  FROM StartingSong s, MiddleSong m, ThirdSong t
-  ORDER BY RAND()
-  LIMIT 10
+      LIMIT 30
+      )
+    SELECT s.spotify_id AS id1, s.title AS title1, s.artist_name_display AS artist1, m.spotify_id AS id2, m.title AS title2, m.artist_name_display AS artist2, t.spotify_id AS id3, t.title AS title3, t.artist_name_display AS artist3
+    FROM StartingSong s, MiddleSong m, ThirdSong t
+    ORDER BY RAND()
+    LIMIT 10
   `, (err, data) => {
     if (err || data.length === 0) {
       console.log(err);
@@ -450,25 +524,7 @@ const mood_shift_playlist = async function(req, res) {
   })
 }
 
-// Route 10
-const words = async function(req, res) {
-  connection.query(`
-    SELECT w.Word
-    FROM WordVAD w
-  `, (err, data) => {
-    if (err || data.length === 0) {
-      console.log(err);
-      res.json({});
-    } else {
-      res.json(data.map(obj => obj.Word));
-      console.log(res)
-      return res;
-    }
-  })
-}
-
 module.exports = {
-  top_words,
   quotes_and_songs,
   creators_vad,
   creator_similarity,
@@ -480,5 +536,30 @@ module.exports = {
   word_to_vad,
   authors,
   author_quotes,
-  artist_songs
+  artist_songs,
+  songs_higher_title_vad
 }
+
+// Old Routes
+// const top_words = async function(req, res) {
+//   const valence = req.params.valence;
+//   const arousal = req.params.arousal;
+//   const dominance = req.params.dominance;
+
+//   connection.query(`
+//     SELECT w.Word
+//     FROM WordVAD w
+//     ORDER BY POWER(w.Valence - ${valence}, 2) 
+//     + POWER(w.Arousal - ${arousal}, 2) 
+//     + POWER(w.Dominance - ${dominance}, 2) ASC
+//     LIMIT 1
+//   `, (err, data) => {
+//     if (err || data.length === 0) {
+//       console.log(err);
+//       res.json({});
+//     } else {
+//       res.json(data.map(obj => obj.Word));
+//       return res;
+//     }
+//   })
+// }

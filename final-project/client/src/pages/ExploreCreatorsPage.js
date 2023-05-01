@@ -68,9 +68,7 @@ function ExploreCreatorsPage({ color }) {
         }
 
         getArtistSimilarityScore(firstArtist, secondArtist)
-            .then(data => {
-                console.log(data);
-                setSimilarityData(data[0])})
+            .then(data => {setSimilarityData(data[0])})
             .then(() => setIsSimilarityScore(true));
     }
     const filteredSearch = async () => {

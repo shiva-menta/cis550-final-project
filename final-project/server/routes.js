@@ -239,12 +239,22 @@ const creator_similarity = async function(req, res) {
   const creator2_name = req.params.creator2_name;
 
   connection.query(`
+    WITH CreatorVAD AS (
+      SELECT au.author_name_display AS name, 'Quote Author' AS type, au.avg_val, au.avg_ars, au.avg_dom
+      FROM AuthorsVAD au
+
+      UNION
+      
+      SELECT ar.artist_name_display AS name, 'Song Artist' AS type, ar.avg_val, ar.avg_ars, ar.avg_dom
+      FROM ArtistsVAD ar
+    )
+
     SELECT c1.avg_val - c2.avg_val AS valence_diff,
     c1.avg_ars - c2.avg_ars AS arousal_diff,
     c1.avg_dom - c2.avg_dom AS dominance_diff,
     SQRT(POWER(c1.avg_val - c2.avg_val, 2) + POWER(c1.avg_ars -  c2.avg_ars, 2) + POWER(c1.avg_dom - c2.avg_dom, 2)) AS similarity_score
-    FROM ArtistsVAD c1, ArtistsVAD c2
-    WHERE c1.artist_name_display = '${creator1_name}' AND c2.artist_name_display = '${creator2_name}';
+    FROM CreatorVAD c1, CreatorVAD c2
+    WHERE c1.name = '${creator1_name}' AND c2.name = '${creator2_name}';
   `, (err, data) => {
     if (err || data.length === 0) {
       console.log(err);
@@ -444,6 +454,8 @@ const mood_shift_playlist = async function(req, res) {
   const start_word = req.query.start_word;
   const end_word = req.query.end_word;
   const threshold = req.query.threshold ?? 1;
+
+  console.log(start_word, end_word, threshold)
 
   connection.query(`
     WITH Word1 AS 

@@ -86,7 +86,7 @@ const getCountryData = async (accessToken) => {
     return newData;
 }
 const getPlaylists = async (startWord, endWord, threshold, accessToken) => {
-    const res = await fetch(`http://localhost:8080/mood_shift_playlist?startWord=${startWord}&endWord=${endWord}&threshold=${threshold}`);
+    const res = await fetch(`http://localhost:8080/mood_shift_playlist?start_word=${startWord}&end_word=${endWord}&threshold=${threshold}`);
     const data = await res.json();
     const newData = await Promise.all(data.map(async (item) => {
         const ids = [item.id1, item.id2, item.id3];

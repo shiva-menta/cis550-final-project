@@ -12,8 +12,8 @@ app.use(cors({
 // provide their handlers that we implemented in routes.js
 // app.get('/top_word/:valence/:arousal/:dominance', routes.top_words);
 app.get('/words', routes.words);
-app.get('/artists/:artist_id', routes.artists);
-app.get('/authors/:author_id', routes.authors);
+app.get('/artists/:artist_name', routes.artists);
+app.get('/authors/:author_name', routes.authors);
 app.get('/artist_songs/:artist_name', routes.artist_songs);
 app.get('/author_quotes/:author_name', routes.author_quotes);
 app.get('/word_to_vad/:word', routes.word_to_vad);

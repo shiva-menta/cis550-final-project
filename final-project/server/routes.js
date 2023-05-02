@@ -8,7 +8,8 @@ const connection = mysql.createConnection({
   user: config.rds_user,
   password: config.rds_password,
   port: config.rds_port,
-  database: config.rds_db
+  database: config.rds_db,
+  timeout: 10000
 });
 connection.connect((err) => err && console.log(err));
 
@@ -32,7 +33,7 @@ const words = async function(req, res) {
 
 // Route 2: Get Summarized Statistics for an Artist
 const artists = async function(req, res) {
-  const artist_name = req.params.artist_id;
+  const artist_name = req.params.artist_name;
 
   connection.query(`
     SELECT av.artist_name_display,
@@ -61,7 +62,7 @@ const artists = async function(req, res) {
 
 // Route 3: Get Summarized Statistics for an Author
 const authors = async function(req, res) {
-  const author = req.params.author_id;
+  const author = req.params.author_name;
 
   connection.query(`
     SELECT au.author_name_display,
@@ -397,48 +398,48 @@ const songs_higher_title_vad = async function(req, res) {
 // Route 12: Get Signature Song & Quote of a Country
 const country_songs_and_quotes = async function(req, res) {
   connection.query(`
-  WITH SongCountry AS (
-    SELECT a.country, s.title as content, s.artist_name_display as creator, s.valence, s.arousal, s.dominance, s.spotify_id
-    FROM Song s JOIN Artist a ON s.artist_name_normal=a.name_normal
-    WHERE country <> 'unknown'
-  ),
-  QuoteCountry AS (
-    SELECT a.country, q.quote as content, q.author_name_display as creator, q.valence, q.arousal, q.dominance, NULL as spotify_id
-    FROM Quote q JOIN Author a ON q.author_name_normal=a.name_normal
-    WHERE country <> 'unknown'
-  ),
-  AllCountry AS (
-    SELECT * FROM SongCountry
-    UNION
-    SELECT * FROM QuoteCountry
-  ),
-  CountryVAD AS
-    (SELECT country, avg(valence) as avg_val, avg(arousal) as avg_ars, avg(dominance) as avg_dom
-    FROM AllCountry
-    GROUP BY country
-  )
+    WITH SongCountry AS (
+      SELECT a.country, s.title as content, s.artist_name_display as creator, s.valence, s.arousal, s.dominance, s.spotify_id
+      FROM Song s JOIN Artist a ON s.artist_name_normal=a.name_normal
+      WHERE country <> 'unknown'
+    ),
+    QuoteCountry AS (
+      SELECT a.country, q.quote as content, q.author_name_display as creator, q.valence, q.arousal, q.dominance, NULL as spotify_id
+      FROM Quote q JOIN Author a ON q.author_name_normal=a.name_normal
+      WHERE country <> 'unknown'
+    ),
+    AllCountry AS (
+      SELECT * FROM SongCountry
+      UNION
+      SELECT * FROM QuoteCountry
+    ),
+    CountryVAD AS
+      (SELECT country, avg(valence) as avg_val, avg(arousal) as avg_ars, avg(dominance) as avg_dom
+      FROM AllCountry
+      GROUP BY country
+    )
 
-  SELECT c.Country AS country, s.content AS title, s.creator AS artist, q.content AS quote, q.creator AS author, c.avg_val AS valence, c.avg_ars AS arousal, c.avg_dom AS dominance, s.spotify_id AS spotifyId
-  FROM CountryVAD c
-    JOIN SongCountry s ON c.country = s.country
-    JOIN QuoteCountry q ON c.country = q.country
-  WHERE
-    (s.content, s.creator) IN
-        (SELECT * FROM (
-              SELECT content, creator FROM SongCountry
-              WHERE country = c.country
-              ORDER BY (ABS(valence - c.avg_val) + ABS(arousal - c.avg_ars) + ABS(dominance - c.avg_dom))
-              LIMIT 1
-          ) AS best_song)
-
-  AND
-    (q.content, q.creator) IN
+    SELECT c.Country AS country, s.content AS title, s.creator AS artist, q.content AS quote, q.creator AS author, c.avg_val AS valence, c.avg_ars AS arousal, c.avg_dom AS dominance, s.spotify_id AS spotifyId
+    FROM CountryVAD c
+      JOIN SongCountry s ON c.country = s.country
+      JOIN QuoteCountry q ON c.country = q.country
+    WHERE
+      (s.content, s.creator) IN
           (SELECT * FROM (
-              SELECT content, creator FROM QuoteCountry
-              WHERE country = c.country
-              ORDER BY (ABS(valence - c.avg_val) + ABS(arousal - c.avg_ars) + ABS(dominance - c.avg_dom))
-              LIMIT 1
-          ) AS best_quote)
+                SELECT content, creator FROM SongCountry
+                WHERE country = c.country
+                ORDER BY (ABS(valence - c.avg_val) + ABS(arousal - c.avg_ars) + ABS(dominance - c.avg_dom))
+                LIMIT 1
+            ) AS best_song)
+
+    AND
+      (q.content, q.creator) IN
+            (SELECT * FROM (
+                SELECT content, creator FROM QuoteCountry
+                WHERE country = c.country
+                ORDER BY (ABS(valence - c.avg_val) + ABS(arousal - c.avg_ars) + ABS(dominance - c.avg_dom))
+                LIMIT 1
+            ) AS best_quote)
   `, (err, data) => {
     if (err || data.length === 0) {
       console.log(err);

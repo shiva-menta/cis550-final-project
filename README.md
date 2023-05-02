@@ -12,13 +12,13 @@ In a digital world that is dominated by distractedness and emotional unease, we 
 ## Instructions for Starting Program
 1. `cd final-project`: Go into final project source code folder.
 2. Starting the Frontend:
-  1. `cd client`
-  2. `npm install`: Install node_modules / dependencies.
-  3. `npm start`: Launch frontend application.
+  i. `cd client`
+  ii. `npm install`: Install node_modules / dependencies.
+  iii. `npm start`: Launch frontend application.
 3. Starting the Backend:
-  1. `cd server`
-  2. `npm install`: Install node_modules / dependencies.
-  3. `npm start`: Launch frontend application.
+  i. `cd server`
+  ii. `npm install`: Install node_modules / dependencies.
+  iii. `npm start`: Launch frontend application.
 
 ## Dependencies (no user steps required)
 - Tailwind CSS

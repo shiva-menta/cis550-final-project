@@ -9,6 +9,8 @@ In a digital world that is dominated by distractedness and emotional unease, we 
 
 `final-project`: folder containing actual project source code, including frontend and backend.
 
+`Schema`: text file that contains the schema for the different relations in our database.
+
 ## Instructions for Starting Program
 1. `cd final-project`: Go into final project source code folder.
 2. Starting the Frontend:

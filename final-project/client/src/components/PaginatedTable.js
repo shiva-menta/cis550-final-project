@@ -23,7 +23,7 @@ const PaginatedTable = ({ songList, tableDefaults }) => {
   const displayedSongs = songList.slice(startIndex, endIndex);
 
   return (
-    <div className="mt-4">
+    <div className="mt-4 px-8">
         <div className="flex justify-end">
             <button
                 className="bg-black text-white px-4 py-2 mr-2 rounded-md"
@@ -40,31 +40,31 @@ const PaginatedTable = ({ songList, tableDefaults }) => {
                 <AiOutlineArrowRight />
             </button>
         </div>
-      <table className="w-full text-white mt-2">
-        <thead>
-          <tr>
-            {tableDefaults.map((item, idx) => (
-              <th className="w-1/8 text-left" key={idx}>
-                {item.name}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {displayedSongs.map((song, index) => (
-            <tr key={index}>
+        <table className="w-full text-white mt-2">
+          <thead>
+            <tr>
               {tableDefaults.map((item, idx) => (
-                <td
-                  className="w-1/8 overflow-hidden overflow-ellipsis text-left"
-                  key={idx}
-                >
-                  {song[item.value]}
-                </td>
+                <th className="w-1/8 text-left pb-2 border-b border-white/100" key={idx}>
+                  {item.name}
+                </th>
               ))}
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {displayedSongs.map((song, index) => (
+              <tr key={index} className="odd:bg-white/10">
+                {tableDefaults.map((item, idx) => (
+                  <td
+                    className="w-1/8 overflow-hidden overflow-ellipsis text-left align-top py-2"
+                    key={idx}
+                  >
+                    {song[item.value]}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
     </div>
   );
 };

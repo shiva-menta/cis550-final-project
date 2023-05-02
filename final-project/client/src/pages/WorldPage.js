@@ -24,7 +24,8 @@ function WorldPage() {
         let accessToken = "";
         authenticate()
             .then(data => {
-                accessToken = data.access_token;
+                accessToken = data;
+                console.log(accessToken)
                 return getCountryData(accessToken);
             })
             .then(data => setResults(data));

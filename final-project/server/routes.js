@@ -25,7 +25,6 @@ const words = async function(req, res) {
       res.json({});
     } else {
       res.json(data.map(obj => obj.Word));
-      console.log(res)
       return res;
     }
   })

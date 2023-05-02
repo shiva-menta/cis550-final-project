@@ -92,7 +92,7 @@ function TitleComparisonsPage({ color }) {
                 {isSectionTwoOpen && (
                     <div className="content">
                         <div className="px-8">Return all songs where the average VAD values of the words in a song title is greater than the actual song’s VAD values.</div>
-                        <PaginatedTable songList={songList} tableDefaults={tableDefaults} />
+                        <PaginatedTable songList={songList} tableDefaults={tableDefaults}/>
                     </div>
                 )}
             </div>

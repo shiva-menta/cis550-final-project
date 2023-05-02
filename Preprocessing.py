@@ -1,5 +1,4 @@
 """
-TODO: 
 - [DONE] For all Artists that do not have a value under "Country", fill it with "Unknown"
 - [DONE] Same as above for Authors
 - [DONE] In quotes.csv, it gives the author AND their work in one attribute, in the format "Author, Work". I think we should just 
@@ -22,7 +21,6 @@ Harder things:
 """
 
 
-import re
 import csv
 import pandas as pd
 

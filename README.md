@@ -6,9 +6,7 @@ In a digital world that is dominated by distractedness and emotional unease, we 
 
 `Preprocessing.py`: python file for cleaning Author, Artist, Quote, and Song datasets, as well as normalizing names of authors and artists.
 `Testing.js`: testing processing of user input handled by JavaScript file.
-
 `final-project`: folder containing actual project source code, including frontend and backend.
-
 `Schema`: text file that contains the schema for the different relations in our database.
 
 ## Instructions for Starting Program

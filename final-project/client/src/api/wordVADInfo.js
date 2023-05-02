@@ -19,7 +19,15 @@ const getArtistSongs = async (artist_name, accessToken) => {
     const res = await fetch(`http://localhost:8080/artist_songs/${artist_name}`);
     const data = await res.json();
     const newData = await Promise.all(data.map(async (item) => {
+        if (item.spotifyId.length < 2) {
+            return {
+                ...item,
+                link: "",
+                image: "",
+            };
+        };
         const { link, image } = await spotifyIdToJSON(item.spotifyId, accessToken);
+        console.log(link, image)
         return {
             ...item,
             link,

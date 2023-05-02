@@ -34,13 +34,6 @@ const spotifyIdToJSON = async (id, access_token) => {
     const response = await fetch(base_url + 'tracks/' + id, searchParameters(access_token));
     const data = await response.json();
 
-    if (data.error) {
-        return {
-            link: 'https://open.spotify.com/',
-            image: 'none',
-        };
-    };
-
     return {
         link: data.external_urls.spotify,
         image: data.album.images[0].url,

@@ -26,24 +26,22 @@ function CreatorPage() {
 
     // Effect Hook
     useEffect(() => {
-        let accessToken = [];
-        const getData = async () => {
+        const getData = async (accessToken) => {
             if (type === "author") {
-                getAuthor(name)
+                getAuthor(encodeURIComponent(name))
                     .then(data => setUserInfo(data[0]));
-                getAuthorQuotes(name)
+                getAuthorQuotes(encodeURIComponent(name))
                     .then(data => setPieces(data));
             } else {
-                getArtist(name)
+                getArtist(encodeURIComponent(name))
                     .then(data => setUserInfo(data[0]));
-                getArtistSongs(name, accessToken)
+                getArtistSongs(encodeURIComponent(name), accessToken)
                     .then(data => setPieces(data));
             }
         }
 
         authenticate()
-            .then(data => accessToken = data.access_token)
-            .then(getData());
+            .then(data => getData(data));
     }, []);
 
     // Constants

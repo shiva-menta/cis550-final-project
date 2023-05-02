@@ -27,7 +27,7 @@ function ExploreCreatorsPage({ color }) {
     const [minDominance, setMinDominance] = useState(0);
     const [maxDominance, setMaxDominance] = useState(10);
 
-    const [isSearchView, setIsSearchView] = useState(false);
+    const [isSearchView, setIsSearchView] = useState(true);
     const [isSimilarityScore, setIsSimilarityScore] = useState(false);
 
     const [similarityData, setSimilarityData] = useState({});
@@ -169,7 +169,7 @@ function ExploreCreatorsPage({ color }) {
                                 <tr key={index}>
                                 <td className="w-1/5 overflow-hidden overflow-ellipsis">
                                     <Link
-                                    to={`/creator/${result.name}/${
+                                    to={`/creator/${encodeURIComponent(result.name)}/${
                                         result.type === "Quote Author" ? "author" : "artist"
                                     }`}
                                     className="text-white hover:opacity-50 focus:opacity-50"

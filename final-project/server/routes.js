@@ -456,8 +456,6 @@ const mood_shift_playlist = async function(req, res) {
   const end_word = req.query.end_word;
   const threshold = req.query.threshold ?? 1;
 
-  console.log(start_word, end_word, threshold)
-
   connection.query(`
     WITH Word1 AS 
       (SELECT 'word1' as word, w1.valence, w1.arousal, w1.dominance

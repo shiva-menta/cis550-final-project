@@ -3,141 +3,183 @@ const supertest = require('supertest');
 const app = require('../server');
 const results = require("./results.json")
 
-test('GET /author/name', async () => {
-  await supertest(app).get('/author/name')
+test('GET /words', async () => {
+  await supertest(app).get('/words')
     .expect(200)
     .then((res) => {
-      expect(res.text).toMatch(/(?!.* John Doe$)^Created by .*$/);
+      expect(res.body.slice(0, 1)).toStrictEqual(['aardvark']);
     });
 });
 
-test('GET /author/pennkey', async () => {
-  await supertest(app).get('/author/pennkey')
+test('GET /artists/fakeArtist', async () => {
+  await supertest(app).get('/artists/fakeArtistName')
     .expect(200)
     .then((res) => {
-      expect(res.text).toMatch(/(?!.* jdoe$)^Created by .*$/);
+      expect(res.body).toStrictEqual({});
     });
 });
 
-test('GET /random', async () => {
-  await supertest(app).get('/random')
+test('GET /artists/Château Flight', async () => {
+  await supertest(app).get('/artists/Château Flight')
     .expect(200)
     .then((res) => {
-      expect(res.body).toStrictEqual({
-        song_id: expect.any(String),
-        title: expect.any(String),
-      });
+      expect(res.body.slice(0, 2)).toStrictEqual(results.artists);
     });
 });
 
-test('GET /song/0kN3oXYWWAk1uC0y2WoyOE', async () => {
-  await supertest(app).get('/song/0kN3oXYWWAk1uC0y2WoyOE')
+test('GET /authors/FakeAuthor', async () => {
+  await supertest(app).get('/authors/FakeAuthorName')
     .expect(200)
     .then((res) => {
-      expect(res.body).toStrictEqual(results.song)
+      expect(res.body).toStrictEqual({});
     });
 });
 
-test('GET /album/3lS1y25WAhcqJDATJK70Mq', async () => {
-  await supertest(app).get('/album/3lS1y25WAhcqJDATJK70Mq')
+test('GET /authors/Mark Twain', async () => {
+  await supertest(app).get('/authors/Mark Twain')
     .expect(200)
     .then((res) => {
-      expect(res.body).toStrictEqual(results.album)
+      expect(res.body.slice(0, 1)).toStrictEqual(results.authors);
     });
 });
 
-test('GET /albums', async () => {
-  await supertest(app).get('/albums')
+test('GET /artist_songs/fakeArtist', async () => {
+  await supertest(app).get('/artist_songs/fakeArtistName')
     .expect(200)
     .then((res) => {
-      expect(res.body).toStrictEqual(results.albums)
+      expect(res.body).toStrictEqual({});
     });
 });
 
-test('GET /album_songs/6AORtDjduMM3bupSWzbTSG', async () => {
-  await supertest(app).get('/album_songs/6AORtDjduMM3bupSWzbTSG')
+test('GET /artist_songs/Chateau Flight', async () => {
+  await supertest(app).get('/artist_songs/Château Flight')
     .expect(200)
     .then((res) => {
-      expect(res.body).toStrictEqual(results.album_songs)
+      expect(res.body.slice(0, 1)).toStrictEqual(results.artists_songs);
     });
 });
 
-test('GET /top_songs all', async () => {
-  await supertest(app).get('/top_songs')
+test('GET /author_quotes/FakeAuthor', async () => {
+  await supertest(app).get('/author_quotes/FakeAuthorName')
     .expect(200)
     .then((res) => {
-      expect(res.body.length).toEqual(238)
-      expect(res.body[22]).toStrictEqual(results.top_songs_all_22)
+      expect(res.body).toStrictEqual({});
     });
 });
 
-test('GET /top_songs page 3', async () => {
-  await supertest(app).get('/top_songs?page=3')
+test('GET /author_quotes/Mark Twain', async () => {
+  await supertest(app).get('/author_quotes/Mark Twain')
     .expect(200)
     .then((res) => {
-      expect(res.body).toStrictEqual(results.top_songs_page_3)
+      expect(res.body.slice(0, 1)).toStrictEqual(results.authors_quotes);
     });
 });
 
-test('GET /top_songs page 5 page_size 3', async () => {
-  await supertest(app).get('/top_songs?page=5&page_size=3')
+test('GET /word_to_vad/:error', async () => {
+  await supertest(app).get('/word_to_vad/:error')
     .expect(200)
     .then((res) => {
-      expect(res.body).toStrictEqual(results.top_songs_page_5_page_size_3)
+      expect(res.body).toStrictEqual({});
     });
 });
 
-test('GET /top_albums all', async () => {
-  await supertest(app).get('/top_albums')
+test('GET /word_to_vad/excited', async () => {
+  await supertest(app).get('/word_to_vad/excited')
     .expect(200)
     .then((res) => {
-      expect(res.body.length).toEqual(12)
-      expect(res.body[7]).toStrictEqual(results.top_albums_all_7)
+      expect(res.body).toStrictEqual(results.word_to_vad);
     });
 });
 
-test('GET /top_albums page 2', async () => {
-  await supertest(app).get('/top_albums?page=2')
+test('GET /quotes_and_songs/:error/:error/:error', async () => {
+  await supertest(app).get('/quotes_and_songs/:error/:error/:error')
     .expect(200)
     .then((res) => {
-      expect(res.body).toStrictEqual(results.top_albums_page_2)
+      expect(res.body).toStrictEqual({});
     });
 });
 
-test('GET /top_albums page 5 page_size 1', async () => {
-  await supertest(app).get('/top_albums?page=5&page_size=1')
+test('GET /quotes_and_songs/5/5/5', async () => {
+  await supertest(app).get('/quotes_and_songs/5/5/5')
     .expect(200)
     .then((res) => {
-      expect(res.body).toStrictEqual(results.top_albums_page_5_page_size_1)
+      expect(res.body.quotes[0].author).toStrictEqual('Oliver Markus Malloy');
     });
 });
 
-test('GET /search_songs default', async () => {
-  await supertest(app).get('/search_songs')
+test('GET /creators_vad data = 0', async () => {
+  await supertest(app).get('/creators_vad?min_valence=1.5&max_valence=1.6&min_arousal=2&max_arousal=3&min_dominance=5&max_dominance=6')
     .expect(200)
     .then((res) => {
-      expect(res.body.length).toEqual(219)
-      expect(res.body[0]).toStrictEqual({
-        song_id: expect.any(String),
-        album_id: expect.any(String),
-        title: expect.any(String),
-        number: expect.any(Number),
-        duration: expect.any(Number),
-        plays: expect.any(Number),
-        danceability: expect.any(Number),
-        energy: expect.any(Number),
-        valence: expect.any(Number),
-        tempo: expect.any(Number),
-        key_mode: expect.any(String),
-        explicit: expect.any(Number),
-      });
+      expect(res.body).toStrictEqual({});
     });
 });
 
-test('GET /search_songs filtered', async () => {
-  await supertest(app).get('/search_songs?title=all&explicit=true&energy_low=0.5&valence_low=0.2&valence_high=0.8')
+test('GET /creators_vad data', async () => {
+  await supertest(app).get('/creators_vad?min_valence=5.5&max_valence=5.6&min_arousal=5.2&max_arousal=5.3&min_dominance=5.66&max_dominance=5.7')
     .expect(200)
     .then((res) => {
-      expect(res.body).toStrictEqual(results.search_songs_filtered)
+      expect(res.body).toStrictEqual(results.creators_vad);
     });
+});
+
+test('GET /creator_similarity/:error/:error', async () => {
+  await supertest(app).get('/creator_similarity/:error/:error')
+    .expect(200)
+    .then((res) => {
+      expect(res.body).toStrictEqual({});
+    });
+});
+
+test('GET /creator_similarity/Mark Twain/Château Flight', async () => {
+  await supertest(app).get('/creator_similarity/Mark Twain/Château Flight')
+    .expect(200)
+    .then((res) => {
+      expect(res.body).toStrictEqual(results.creator_similarity);
+    });
+});
+
+test('GET /word_title_vad_frequency/:error/:error', async () => {
+  await supertest(app).get('/word_title_vad_frequency/:error/:error')
+    .expect(200)
+    .then((res) => {
+      expect(res.body).toStrictEqual({});
+    });
+});
+
+test('GET /word_title_vad_frequency/excited/0.1', async () => {
+  await supertest(app).get('/word_title_vad_frequency/excited/0.1')
+    .expect(200)
+    .then((res) => {
+      expect(res.body).toStrictEqual(results.word_title_vad_frequency);
+    });
+});
+
+test('GET /songs_higher_title_vad', async () => {
+  await supertest(app).get('/songs_higher_title_vad')
+    .expect(200)
+    .then((res) => {
+      expect(res.body.slice(0, 1)).toStrictEqual(results.songs_higher_title_vad);
+    });
+});
+
+test('GET /country_songs_and_quotes', async () => {
+  await supertest(app).get('/country_songs_and_quotes')
+    .expect(200)
+    .then((res) => {
+      expect(res.body.slice(0, 1)).toStrictEqual(results.country_songs_and_quotes);
+    });
+});
+
+test('GET /mood_shift_playlist', async () => {
+  await supertest(app).get('/mood_shift_playlist')
+    .expect(200)
+    .then((res) => {
+      expect(res.body).toStrictEqual({});
+    });
+});
+
+test('GET /mood_shift_playlist start & end word', async () => {
+  await supertest(app).get('/mood_shift_playlist?start_word=aardvark&end_word=abalone')
+    .expect(200)
 });

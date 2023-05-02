@@ -37,6 +37,7 @@ function TitleComparisonsPage({ color }) {
     const [isSectionTwoOpen, setIsSectionTwoOpen] = useState(false);
     const [searchResults, setSearchResults] = useState([]);
     const [vadFrequency, setVadFrequency] = useState([{ Frequency: 0 }, { Frequency: 0 }]);
+    const [showResults, setShowResults] = useState(false);
     const [songList, setSongList] = useState([]);
     const [selectedWord, setSelectedWord] = useState("");
 
@@ -50,8 +51,13 @@ function TitleComparisonsPage({ color }) {
 
     // getContent Function
     const getVadFrequency = async () => {
+        if (selectedWord === "") {
+            alert("Please select a word.");
+            return;
+        }
         getVadFrequencyInfo(selectedWord, 0.5)
-            .then(data => setVadFrequency(data));
+            .then(data => setVadFrequency(data))
+            .then(() => setShowResults(true));
     }
     
     // Render Function
@@ -74,6 +80,10 @@ function TitleComparisonsPage({ color }) {
                     <div className="w-full flex gap-16 text-black justify-center mt-4">
                         <TypeInDropdown onChangeFunc={setSelectedWord} results={searchResults} defaultText={"Type in word..."} />
                         <button type="button" className="text-white py-2 px-4 font-bold rounded-lg w-32" style={gradientStyle} onClick={getVadFrequency}>Match</button>
+                        <div className="text-white flex flex-col">
+                            <div><b>Search results for:</b></div>
+                            {showResults && <div>{selectedWord}</div>}
+                        </div>
                         <div className="text-white w-96 flex">
                             <div><b>Song Title Frequency:</b> {decimalToPercent(vadFrequency[0].Frequency)}</div>
                             <div><b>Quote Frequency:</b> {decimalToPercent(vadFrequency[1].Frequency)}</div>

@@ -270,7 +270,6 @@ const creator_similarity = async function(req, res) {
 const word_title_vad_frequency = async function(req, res) {
   const word = req.params.word;
   const tolerance = req.params.tolerance;
-  console.log(word, tolerance);
 
   connection.query(`
     WITH Selected_Word_VAD AS (

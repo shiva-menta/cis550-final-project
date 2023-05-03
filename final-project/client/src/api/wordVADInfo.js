@@ -58,7 +58,7 @@ const getAllCreatorsWithinVadRange = async (query, minValence, maxValence, minAr
     return data;
 }
 const getArtistSimilarityScore = async (firstArtist, secondArtist) => {
-    const res = await fetch(`http://localhost:8080/creator_similarity/${firstArtist.name}/${secondArtist.name}`);
+    const res = await fetch(`http://localhost:8080/creator_similarity/${encodeURIComponent(firstArtist.name)}/${encodeURIComponent(secondArtist.name)}`);
     const data = await res.json();
     return data;
 }

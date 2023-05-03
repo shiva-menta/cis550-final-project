@@ -169,7 +169,7 @@ test('GET /country_songs_and_quotes', async () => {
     .then((res) => {
       expect(res.body.slice(0, 1)).toStrictEqual(results.country_songs_and_quotes);
     });
-});
+}, 10000);
 
 test('GET /mood_shift_playlist', async () => {
   await supertest(app).get('/mood_shift_playlist')

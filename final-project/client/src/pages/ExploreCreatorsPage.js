@@ -66,12 +66,17 @@ function ExploreCreatorsPage({ color }) {
             alert("Please fill in both fields.");
             return;
         }
-
+        
         getArtistSimilarityScore(firstArtist, secondArtist)
-            .then(data => {setSimilarityData(data[0])})
+            .then(data => setSimilarityData(data[0]))
             .then(() => setIsSimilarityScore(true));
     }
     const filteredSearch = async () => {
+        if (query === '' || query[0] === '%') {
+            alert("Please fill in the search field with valid input.");
+            return;
+        }
+
         getAllCreatorsWithinVadRange(query, minValence, maxValence, minArousal, maxArousal, minDominance, maxDominance)
             .then(data => {
                 if (Object.keys(data).length === 0) {

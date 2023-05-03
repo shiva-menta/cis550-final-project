@@ -10,7 +10,7 @@ function SongCard({ title, artist, image, link }) {
     }
 
     return (
-        <a href={link === '' ? 'https://open.spotify.com/' : ''} target="_blank" rel="noopener noreferrer" className="no-underline text-black">
+        <a href={link === '' ? 'https://open.spotify.com/' : link} target="_blank" rel="noopener noreferrer" className="no-underline text-black">
             <Card className="song-card shadow-md">
                 <Card.Img src={image === '' ? require('../assets/none.png') : image} className="song-image"/>
                 <Card.Title className="mt-2">{cutString(title, 30)}</Card.Title>

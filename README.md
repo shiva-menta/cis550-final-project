@@ -4,3 +4,10 @@ In a digital world that is dominated by distractedness and emotional unease, we 
 
 Preprocessing.py: python file for cleaning Author, Artist, Quote, and Song datasets, as well as normalizing names of authors and artists.
 Testing.js: testing processing of user input handled by JavaScript file.
+
+
+How to run:
+- cd into ./final-project/server and run `npm install` then `npm start`
+    - Note: might need to run `npm install bootstrap` after `npm install` if hitting an error that mentions not being able to locate bootstrap
+- Then, cd into ./final-project/client and run `npm install` then `npm start`
+- The application should open in your default browser as localhost:3000

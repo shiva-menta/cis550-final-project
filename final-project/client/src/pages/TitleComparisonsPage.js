@@ -37,7 +37,7 @@ function TitleComparisonsPage({ color }) {
     const [isSectionTwoOpen, setIsSectionTwoOpen] = useState(false);
     const [searchResults, setSearchResults] = useState([]);
     const [vadFrequency, setVadFrequency] = useState([{ Frequency: 0 }, { Frequency: 0 }]);
-    const [showResults, setShowResults] = useState(false);
+    const [searchedWord, setSearchedWord] = useState("");
     const [songList, setSongList] = useState([]);
     const [selectedWord, setSelectedWord] = useState("");
 
@@ -57,7 +57,7 @@ function TitleComparisonsPage({ color }) {
         }
         getVadFrequencyInfo(selectedWord, 0.5)
             .then(data => setVadFrequency(data))
-            .then(() => setShowResults(true));
+            .then(() => setSearchedWord(selectedWord));
     }
     
     // Render Function
@@ -82,7 +82,7 @@ function TitleComparisonsPage({ color }) {
                         <button type="button" className="text-white py-2 px-4 font-bold rounded-lg w-32" style={gradientStyle} onClick={getVadFrequency}>Match</button>
                         <div className="text-white flex flex-col">
                             <div><b>Search results for:</b></div>
-                            {showResults && <div>{selectedWord}</div>}
+                            <div>{searchedWord}</div>
                         </div>
                         <div className="text-white w-96 flex">
                             <div><b>Song Title Frequency:</b> {decimalToPercent(vadFrequency[0].Frequency)}</div>

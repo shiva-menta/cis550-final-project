@@ -27,7 +27,7 @@ function ExploreCreatorsPage({ color }) {
     const [minDominance, setMinDominance] = useState(0);
     const [maxDominance, setMaxDominance] = useState(10);
 
-    const [isSearchView, setIsSearchView] = useState(false);
+    const [isSearchView, setIsSearchView] = useState(true);
     const [isSimilarityScore, setIsSimilarityScore] = useState(false);
 
     const [similarityData, setSimilarityData] = useState({});
@@ -66,12 +66,17 @@ function ExploreCreatorsPage({ color }) {
             alert("Please fill in both fields.");
             return;
         }
-
+        
         getArtistSimilarityScore(firstArtist, secondArtist)
-            .then(data => {setSimilarityData(data[0])})
+            .then(data => setSimilarityData(data[0]))
             .then(() => setIsSimilarityScore(true));
     }
     const filteredSearch = async () => {
+        if (query === '' || query[0] === '%') {
+            alert("Please fill in the search field with valid input.");
+            return;
+        }
+
         getAllCreatorsWithinVadRange(query, minValence, maxValence, minArousal, maxArousal, minDominance, maxDominance)
             .then(data => {
                 if (Object.keys(data).length === 0) {
@@ -169,7 +174,7 @@ function ExploreCreatorsPage({ color }) {
                                 <tr key={index}>
                                 <td className="w-1/5 overflow-hidden overflow-ellipsis">
                                     <Link
-                                    to={`/creator/${result.name}/${
+                                    to={`/creator/${encodeURIComponent(result.name)}/${
                                         result.type === "Quote Author" ? "author" : "artist"
                                     }`}
                                     className="text-white hover:opacity-50 focus:opacity-50"

@@ -19,7 +19,15 @@ const getArtistSongs = async (artist_name, accessToken) => {
     const res = await fetch(`http://localhost:8080/artist_songs/${artist_name}`);
     const data = await res.json();
     const newData = await Promise.all(data.map(async (item) => {
+        if (item.spotifyId.length < 2) {
+            return {
+                ...item,
+                link: "",
+                image: "",
+            };
+        };
         const { link, image } = await spotifyIdToJSON(item.spotifyId, accessToken);
+        console.log(link, image)
         return {
             ...item,
             link,
@@ -50,7 +58,7 @@ const getAllCreatorsWithinVadRange = async (query, minValence, maxValence, minAr
     return data;
 }
 const getArtistSimilarityScore = async (firstArtist, secondArtist) => {
-    const res = await fetch(`http://localhost:8080/creator_similarity/${firstArtist.name}/${secondArtist.name}`);
+    const res = await fetch(`http://localhost:8080/creator_similarity/${encodeURIComponent(firstArtist.name)}/${encodeURIComponent(secondArtist.name)}`);
     const data = await res.json();
     return data;
 }
@@ -63,6 +71,13 @@ const getTopQuotesAndSongs = async (valence, arousal, dominance, accessToken) =>
     const res = await fetch(`http://localhost:8080/quotes_and_songs/${valence}/${arousal}/${dominance}`);
     const data = await res.json();
     const newData = await Promise.all(data.songs.map(async (item) => {
+        if (item.spotifyId.length < 2) {
+            return {
+                ...item,
+                link: "",
+                image: "",
+            };
+        };
         const { link, image } = await spotifyIdToJSON(item.spotifyId, accessToken);
         return {
             ...item,
@@ -76,6 +91,13 @@ const getCountryData = async (accessToken) => {
     const res = await fetch(`http://localhost:8080/country_songs_and_quotes`);
     const data = await res.json();
     const newData = await Promise.all(data.map(async (item) => {
+        if (item.spotifyId.length < 2) {
+            return {
+                ...item,
+                link: "",
+                image: "",
+            };
+        };
         const { link, image } = await spotifyIdToJSON(item.spotifyId, accessToken);
         return {
             ...item,
@@ -91,9 +113,14 @@ const getPlaylists = async (startWord, endWord, threshold, accessToken) => {
     const newData = await Promise.all(data.map(async (item) => {
         const ids = [item.id1, item.id2, item.id3];
         for (let i = 0; i < ids.length; i++) {
-            const { link, image } = await spotifyIdToJSON(ids[i], accessToken);
-            item[`link${i + 1}`] = link;
-            item[`image${i + 1}`] = image;
+            if (ids[i].length < 2) {
+                item[`link${i + 1}`] = "";
+                item[`image${i + 1}`] = "";
+            } else {
+                const { link, image } = await spotifyIdToJSON(ids[i], accessToken);
+                item[`link${i + 1}`] = link;
+                item[`image${i + 1}`] = image;
+            };
         }
         return item;
     }));

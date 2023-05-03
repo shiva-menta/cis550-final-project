@@ -98,12 +98,13 @@ function CheckInPage({ color, setColor }) {
                     tempValence = data[0].valence;
                     tempArousal = data[0].arousal;
                     tempDominance = data[0].dominance;
+                    setColor(vadToHue(data[0].valence, data[0].arousal, data[0].dominance))
                 })
                 .then(() => getTopContent());
         } else {
-            getTopContent();
+            getTopContent()
+                .then(setColor(vadToHue(tempValence, tempArousal, tempDominance)));
         }
-        setColor(vadToHue(tempValence, tempArousal, tempDominance));
     }
 
     // Render Function

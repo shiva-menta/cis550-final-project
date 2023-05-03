@@ -550,27 +550,3 @@ module.exports = {
   artist_songs,
   songs_higher_title_vad
 }
-
-// Old Routes
-// const top_words = async function(req, res) {
-//   const valence = req.params.valence;
-//   const arousal = req.params.arousal;
-//   const dominance = req.params.dominance;
-
-//   connection.query(`
-//     SELECT w.Word
-//     FROM WordVAD w
-//     ORDER BY POWER(w.Valence - ${valence}, 2) 
-//     + POWER(w.Arousal - ${arousal}, 2) 
-//     + POWER(w.Dominance - ${dominance}, 2) ASC
-//     LIMIT 1
-//   `, (err, data) => {
-//     if (err || data.length === 0) {
-//       console.log(err);
-//       res.json({});
-//     } else {
-//       res.json(data.map(obj => obj.Word));
-//       return res;
-//     }
-//   })
-// }

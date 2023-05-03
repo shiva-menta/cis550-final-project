@@ -22,6 +22,8 @@ In a digital world that is dominated by distractedness and emotional unease, we 
   * `cd server`
   * `npm install`: Install node_modules / dependencies.
   * `npm start`: Launch frontend application.
+4. Testing the Backend:
+  * `npm test`
 
 ## Dependencies (no user steps required)
 - Tailwind CSS
